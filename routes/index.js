@@ -1,9 +1,12 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const userRoutes = require('./user.route');
+const imageRoutes = require('./image.route');
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+const router = express.Router();
+
+router.get('/status', (req, res) => res.json('OK'));
+
+router.use('/user', userRoutes);
+// router.use('/image', imageRoutes);
 
 module.exports = router;
