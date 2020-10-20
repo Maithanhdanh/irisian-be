@@ -1,20 +1,60 @@
-const express = require('express');
-const controller = require('../controllers/image.controller');
-const { oAuth } = require('../middlewares/oAth');
-const { validate } = require('../validation/image.validation');
-const router = express.Router();
+const express = require("express")
+const controller = require("../controllers/image.controller")
+const { oAuth } = require("../middlewares/oAth")
+const {
+	uploadImage,
+	verifyImage,
+	getFindings,
+	getInfo,
+} = require("../middlewares/image")
+const { validate } = require("../validation/image.validation")
+const router = express.Router()
+const multer = require("multer")
+const mongoose = require("mongoose")
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, "uploads/")
+	},
+	filename: function (req, file, cb) {
+		cb(null, mongoose.Types.ObjectId() + ".jpg") //Appending .jpg
+	},
+})
 
-router.route('/add')
-    .post(oAuth ,validate.addDiagnosis(), controller.addDiagnosis);
+const upload = multer({ storage: storage })
 
-router.route('/search')
-    .post(oAuth ,validate.searchDiagnosis(), controller.searchDiagnosis);
+router
+	.route("/upload")
+	.post(
+		oAuth,
+		upload.single("file"),
+		verifyImage,
+		uploadImage,
+		controller.importImage
+	)
 
-router.route('/')
-    .get(oAuth ,validate.addDiagnosis(), controller.addDiagnosis);
+router
+	.route("/info/:imageId")
+	.get(
+		oAuth,
+		validate.authInfo(),
+		getInfo,
+		validate.infoImage(),
+		controller.importInfo
+	)
 
-router.route('/status')
-    .get((req, res) => res.json('OK'));
-module.exports = router;
+router
+	.route("/findings/:imageId")
+	.get(
+		oAuth,
+		validate.authInfo(),
+		getFindings,
+		validate.findingsImage(),
+		controller.importFindings
+	)
 
+router
+	.route("/get/:imageId")
+	.get(oAuth, validate.getImage(), controller.getImage)
 
+router.route("/status").get((req, res) => res.json("OK"))
+module.exports = router

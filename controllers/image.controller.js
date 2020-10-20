@@ -1,128 +1,168 @@
-const responseReturn = require("../response/responseReturn");
-const { Diagnosis, Medicine } = require("../models/image.model")
-const {Patient, ListHistory} = require("../models/image.model")
-const { validationResult } = require('express-validator');
+const responseReturn = require("../response/responseReturn")
+const { PredictedResult } = require("../models/image.model")
+const { User, ListHistory } = require("../models/user.model")
+const { validationResult } = require("express-validator")
 
-/** 
-    * ADD PATIENT
-    * 
-    * @body patient_name    (String) patient's name             (required)
-    * @body dob             (string) patient's date of birth    (required)
-    * @body gender          (string) patient's gender           (required)
-    * @body phone           (string) patient's phone            (required)
-    * @body address         (string) patient's address          (optional)
-    * 
-    * @return 200 - 'Patient is added' || 500 - errors
-**/
-exports.addDiagnosis = async (req, res, next) => {
-    const errors = validationResult(req);
-    let resReturn = new responseReturn();
-    if (!errors.isEmpty()) {
-        resReturn.failure(res, 500, errors.array())
-        return;
-    }
+/**
+ * ADD User
+ *
+ * @body User_name    (String) User's name             (required)
+ * @body dob             (string) User's date of birth    (required)
+ * @body gender          (string) User's gender           (required)
+ * @body phone           (string) User's phone            (required)
+ * @body address         (string) User's address          (optional)
+ *
+ * @return 200 - 'User is added' || 500 - errors
+ **/
+exports.importImage = async (req, res) => {
+	let resReturn = new responseReturn()
+	if (!req.userId | (req.userId === ""))
+		return resReturn.failure(req, res, 422, "no User detected")
+	try {
+		const ownerId = req.userId
+		const role = req.role
+		const {
+			path,
+			image: imageId,
+			no_background: noBackgroundImageId,
+		} = req.body
 
-    const { patient_id, symptoms, medicine, numDates, userId } = req.body;
-    
-    try {
-        const existPatient = await Patient.get(patient_id);
-        if(existPatient === null) {
-            resReturn.failure(res, 500, {message:"Inexistent Patient"})
-            return
-        }
+		const existUser = await User.get(ownerId)
+		if (existUser === null) {
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			return
+		}
 
-        const newMedicine = new Medicine({name:medicine, numDates})
+		const predictedResult = new PredictedResult({
+			imageId,
+			noBackgroundImageId,
+			ownerId,
+		})
+		const doc = await predictedResult.save()
 
-        const newDiagnosis = new Diagnosis({ doctor_id:userId, patient_id, symptoms, medicine:newMedicine, date:new Date()})
-        const doc = await newDiagnosis.save()
-        
-        const newHistory = new ListHistory({doctor_id:userId, diagnosis_id:doc.id, date:new Date()})
-        existPatient.history.push(newHistory)
+		const predictedInfo = doc._id
+		const newHistory = new ListHistory({ path, imageId, predictedInfo }).history
 
-        const newPatient = await existPatient.save()
-        resReturn.success(req, res, 200, {message:"new Diagnosis is added",diagnosisID:doc.id})
-    } catch(errors) {
-        resReturn.failure(req, res, 500, errors)
-    }
-};
+		existUser.mergeHistory(newHistory)
 
-/** 
-    * SEARCH PATIENTS
-    * 
-    * @query patient_name    (String) patient's name             (required)
-    * @query dob             (string) patient's date of birth    (required)
-    * @query gender          (string) patient's gender           (required)
-    * @query phone           (string) patient's phone            (required)
-    * @query address         (string) patient's address          (optional)
-    * @query date_come       (string) patient's address          (optional)
-    * 
-    * @return 200 - list of patient || 500 - errors
-**/
-exports.searchDiagnosis = async (req, res, next) => {
-    const errors = validationResult(req);
-    let resReturn = new responseReturn();
-    if (!errors.isEmpty()) {
-        resReturn.failure(res, 500, errors.array())
-        return;
-    }
+		await User.update(ownerId, {
+			history: existUser.history,
+		})
+		const transformedDoc = doc.transform()
 
-    const { diagnosis_id } = req.body;
+		resReturn.success(req, res, 200, {
+			message: "new Image is added",
+			image: transformedDoc,
+		})
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
 
-    try {
-        const listDiagnosis = []
-        diagnosis_id.map(async id=>{
-            const doc = await Diagnosis.get(id)
-            listDiagnosis.push(await doc.transform())
-            
-            if(listDiagnosis.length === diagnosis_id.length){
-                resReturn.success(req, res, 200, listDiagnosis)
-            }
-        })
+/**
+ * SEARCH UserS
+ * p
+ * @query User_name    (String) User's name             (required)
+ * @query dob             (string) User's date of birth    (required)
+ * @query gender          (string) User's gender           (required)
+ * @query phone           (string) User's phone            (required)
+ * @query address         (string) User's address          (optional)
+ * @query date_come       (string) User's address          (optional)
+ *
+ * @return 200 - list of User || 500 - errors
+ **/
+exports.importInfo = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		return resReturn.failure(req, res, 422, errors.array())
+	}
+	try {
+		const { imageId } = req.params
+		const { userId: ownerId, info } = req.body
 
-    } catch (errors) {
-        resReturn.failure(req, res, 500, errors)
-    }
+		const existUser = await User.get(ownerId)
+		if (existUser === null) {
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			return
+		}
 
-};
+		const predictedResult = await PredictedResult.get(imageId)
+		predictedResult.updateResult({info})
+		await PredictedResult.update(imageId, { result: predictedResult.result })
+		await User.update(ownerId, {})
 
-/** 
-    * SEARCH PATIENT BY ID
-    * 
-    * @query id    (String) patient's id    (required)
-    * 
-    * @return 200 - patient's profile || 500 - errors
-**/
-exports.getDiagnosis = async (req, res, next) => {
-    const errors = validationResult(req);
-    let resReturn = new responseReturn();
-    if (!errors.isEmpty()) {
-        resReturn.failure(res, 500, errors.array())
-        return;
-    }
+		resReturn.success(req, res, 200, {
+			message: "Updated info",
+			image: predictedResult.result.info,
+		})
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
 
-    const patientID = req.query.id
+/**
+ * SEARCH User BY ID
+ *
+ * @query id    (String) User's id    (required)
+ *
+ * @return 200 - User's profile || 500 - errors
+ **/
+exports.importFindings = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 500, errors.array())
+		return
+	}
 
-    try {
-        const doc = await Patient.findById(patientID).exec();
-        resReturn.success(res, 200, doc)
-    } catch (errors) {
-        resReturn.failure(res, 500, errors)
-    }
-};
+	try {
+		const { imageId } = req.params
+		const { userId: ownerId, findings } = req.body
 
-/** 
-    * UPDATE PATIENT INFO
-    * 
-    * @query id    (String) patient's id    (required)
-    * 
-    * @return 200 - patient's profile || 500 - errors
-**/
-exports.updateDiagnosis = async (req, res, next) => {
-    const errors = validationResult(req);
-    let resReturn = new responseReturn();
-    if (!errors.isEmpty()) {
-        resReturn.failure(res, 500, errors.array())
-        return;
-    }
-    
-};
+		const existUser = await User.get(ownerId)
+		if (existUser === null) {
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			return
+		}
+
+		const predictedResult = await PredictedResult.get(imageId)
+		predictedResult.updateResult({findings})
+		await PredictedResult.update(imageId, { result: predictedResult.result })
+		await User.update(ownerId, {})
+
+		resReturn.success(req, res, 200, {
+			message: "Updated info",
+			findings: predictedResult.result.findings,
+		})
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
+
+exports.getImage = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 500, errors.array())
+		return
+	}
+
+	try {
+		const { imageId } = req.params
+		const { userId: ownerId } = req.body
+
+		const existUser = await User.get(ownerId)
+		if (existUser === null) {
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			return
+		}
+
+		const doc = await PredictedResult.get(imageId)
+		const transformedDoc = doc.transform()
+
+		resReturn.success(req, res, 200, transformedDoc)
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}

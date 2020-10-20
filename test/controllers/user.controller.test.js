@@ -97,7 +97,7 @@ describe("Authentication", () => {
 				console.log(res.body)
 			expect(res.body.error).toBe(false)
 			expect(mongoose.Types.ObjectId.isValid(res.body.response.uid)).toBe(true)
-			expect(Object.keys(res.body.response).length).toBe(9)
+			expect(Object.keys(res.body.response).length).toBe(5)
 		})
 		
 		it("should fail => missing token", async () => {

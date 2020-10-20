@@ -1,46 +1,44 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const bcrypt = require("bcryptjs")
-class Medicine {
-    constructor({name, numDates}){
-        this.name = name
-        this.numDates = numDates
-    }
+const ENV_VAR = require("../config/vars")
+const moment = require("moment")
 
-    static async generateId(object){
-        object.id = await bcrypt.hash(new Date(), 10)
-        return object
-    }
+class ResultInfo {
+	constructor(oldData) {
+		const oldKeys = Object.keys(oldData)
+		oldKeys.map((key) => (this[key] = oldData[key]))
+	}
+
+	set update(data) {
+		const keys = Object.keys(data)
+		keys.map((key) => (this[key] = data[key]))
+	}
 }
 
-const diagnosisSchema = new Schema(
-    {
-        doctor_id: { type: String, required: true },
-        patient_id: { type: String, required: true },
-        date: { type: String, required: true, default: new Date()},
-        symptoms: { type: Array, required: true },
-        status: { type: String, required: true, enum: ["cured", "uncured"], default: "uncured"},
-        medicine: { type: Object },
-    },
-    {
-        timestamps: true,
-    }
+const imageSchema = new Schema(
+	{
+		imageId: { type: String, required: true },
+		noBackgroundImageId: { type: String, required: true },
+		ownerId: { type: String, required: true },
+		date: { type: String, default: moment().format(ENV_VAR.DATE_FORMAT) },
+		result: { type: Object, default: {} },
+	},
+	{
+		timestamps: true,
+	}
 )
 
-diagnosisSchema.pre("save", async function save(next) {
-    try {
-        //   if (!this.isModified("password")) return next();
+imageSchema.pre("save", async function save(next) {
+	try {
+		this.imageId = this.imageId.replace("/image/", "")
+		this.noBackgroundImageId = this.noBackgroundImageId.replace("/image/", "")
 
-        //   const rounds = env === "test" ? 1 : 10;
-
-        //   const hash = await bcrypt.hash(this.password, rounds);
-        //   this.password = hash;
-
-        return next();
-    } catch (error) {
-        return next(error);
-    }
-});
+		return next()
+	} catch (error) {
+		return next(error)
+	}
+})
 
 /**
  * Add your
@@ -48,217 +46,137 @@ diagnosisSchema.pre("save", async function save(next) {
  * - validations
  * - virtuals
  */
-diagnosisSchema.pre("update", async function (next) {
-    try {
-        //   if (!this.isModified("password")) return next();
+imageSchema.pre("update", async function (next) {
+	try {
+		//   if (!this.isModified("password")) return next();
 
-        //   const rounds = env === "test" ? 1 : 10;
+		//   const rounds = env === "test" ? 1 : 10;
 
-        //   const hash = await bcrypt.hash(this.password, rounds);
-        //   this.password = hash;
+		//   const hash = await bcrypt.hash(this.password, rounds);
+		//   this.password = hash;
+		this.updateAt = new Date()
 
-        return next();
-    } catch (error) {
-        return next(error);
-    }
-});
+		return next()
+	} catch (error) {
+		return next(error)
+	}
+})
+
 
 /**
  * Methods
  */
 
-diagnosisSchema.method({
-    transform() {
-        const transformed = {};
-        const fields = ["medicine", "status", 'symptoms', 'doctor_id', 'date'];
+imageSchema.method({
+	transform() {
+		const transformed = {}
+		const fields = [
+			"imageId",
+			"noBackgroundImageId",
+			"status",
+			"ownerId",
+			"date",
+			"result",
+		]
 
-        fields.forEach((field) => {
-            transformed[field] = this[field];
-        });
+		fields.forEach((field) => {
+			if (field === "date") {
+				transformed[field] = this[field].split("_").join("/")
+			} else {
+				transformed[field] = this[field]
+			}
+		})
 
-        return transformed;
-    },
+		return transformed
+	},
 
-    publicInfoTransform() {
-        const transformed = {};
-        const fields = ["id", "firstname", "lastname", "picture"];
-
-        fields.forEach((field) => {
-            transformed[field] = this[field];
-        });
-
-        return transformed;
-    },
-
-    token() {
-        const playload = {
-            exp: moment().add(jwtExpirationInterval, "minutes").unix(),
-            iat: moment().unix(),
-            sub: this._id,
-        };
-        return jwt.encode(playload, jwtSecret);
-    },
-
-    async passwordMatches(password) {
-        return bcrypt.compare(password, this.password);
-    },
-});
+	updateResult(result) {
+		if (typeof result !== "object")
+			throw new Error({ message: "input result must be object" })
+		const newResult = new ResultInfo(this.result)
+		newResult.update = result
+		this.result = newResult
+	},
+})
 
 /**
  * Statics
  */
-diagnosisSchema.statics = {
-    async getUserDetail(email) {
-        try {
-            //<!-- Get User based on email -->
-            const userModel = await this.findOne({ email: email }).exec();
+imageSchema.statics = {
+	/**
+	 * Get Result
+	 *
+	 * @param {ObjectId} id - The objectId of Result.
+	 * @returns {Promise<Result, APIError>}
+	 */
+	async get(id) {
+		try {
+			let result
 
-            if (!userModel) return null;
-            //transform data
+			result = await this.findOne({ imageId: id }).exec()
+			if (result) {
+				return result
+			}
 
-            return userModel;
-        } catch (error) {
-            throw error;
-        }
-    },
-    /**
-     * Get user
-     *
-     * @param {ObjectId} id - The objectId of user.
-     * @returns {Promise<User, APIError>}
-     */
-    async get(id) {
-        try {
-            let user;
+			throw new Error({ message: "Result does not exist" })
+		} catch (error) {
+			throw error
+		}
+	},
+	/**
+	 * List Results in descending order of 'createdAt' timestamp.
+	 *
+	 * @param {number} skip - Number of Results to be skipped.
+	 * @param {number} limit - Limit number of Results to be returned.
+	 * @returns {Promise<Result[]>}
+	 */
+	async list({ page = 1, perPage = 30, term }) {
+		const reg = new RegExp(term, "i")
+		return this.aggregate([
+			{
+				$project: {
+					fullname: { $concat: ["$firstname", " ", "$lastname"] },
+					fullname1: { $concat: ["$lastname", " ", "$firstname"] },
+					firstname: 1,
+					lastname: 1,
+					picture: 1,
+					id: "$_id",
+				},
+			},
+			{ $match: { $or: [{ fullname: reg }, { fullname1: reg }] } },
+			{
+				$project: {
+					fullname: 0,
+					fullname1: 0,
+					_id: 0,
+				},
+			},
+		])
+	},
+	async update(id, { ...data }) {
+		try {
+			let image
 
-            if (mongoose.Types.ObjectId.isValid(id)) {
-                user = await this.findById(id).exec();
-            }
-            if (user) {
-                return user;
-            }
+			image = await this.findOne({ imageId: id }).exec()
+			if (image) {
+				const keys = Object.keys(data)
+				keys.map((key) => {
+					image[key] = data[key]
+				})
+				image.save()
+				return image
+			}
 
-            throw new APIError({
-                message: "User does not exist",
-                status: httpStatus.NOT_FOUND,
-            });
-        } catch (error) {
-            throw error;
-        }
-    },
+			throw new Error({ message: "Image does not exist" })
+		} catch (error) {
+			throw error
+		}
+	},
+}
 
-    /**
-     * Find user by email and tries to generate a JWT token
-     *
-     * @param {ObjectId} id - The objectId of user.
-     * @returns {Promise<User, APIError>}
-     */
-    async findAndGenerateToken(options) {
-        const { email, password, refreshObject } = options;
-        if (!email)
-            throw new APIError({
-                message: "An email is required to generate a token",
-            });
-
-        const user = await this.findOne({ email }).exec();
-        const err = {
-            status: httpStatus.BAD_REQUEST,
-            isPublic: true,
-        };
-        if (password) {
-            if (user && (await user.passwordMatches(password))) {
-                return { user, accessToken: user.token() };
-            }
-            err.message = "Incorrect email or password";
-        } else if (refreshObject && refreshObject.userEmail === email) {
-            if (moment(refreshObject.expires).isBefore()) {
-                err.message = "Invalid refresh token.";
-            } else {
-                return { user, accessToken: user.token() };
-            }
-        } else {
-            err.message = "Incorrect email or refreshToken";
-        }
-        throw new APIError(err);
-    },
-
-    /**
-     * List users in descending order of 'createdAt' timestamp.
-     *
-     * @param {number} skip - Number of users to be skipped.
-     * @param {number} limit - Limit number of users to be returned.
-     * @returns {Promise<User[]>}
-     */
-    async list({ page = 1, perPage = 30, term }) {
-        const reg = new RegExp(term, "i");
-        return this.aggregate([
-            {
-                $project: {
-                    fullname: { $concat: ["$firstname", " ", "$lastname"] },
-                    fullname1: { $concat: ["$lastname", " ", "$firstname"] },
-                    firstname: 1,
-                    lastname: 1,
-                    picture: 1,
-                    id: "$_id",
-                },
-            },
-            { $match: { $or: [{ fullname: reg }, { fullname1: reg }] } },
-            {
-                $project: {
-                    fullname: 0,
-                    fullname1: 0,
-                    _id: 0,
-                },
-            },
-        ]);
-    },
-
-    /**
-     * Return new validation error
-     * if error is a mongoose duplicate key error
-     *
-     * @param {Error} error
-     * @returns {Error|APIError}
-     */
-    checkDuplicateEmail(error) {
-        if (error.name === "MongoError" && error.code === 11000) {
-            return new APIError({
-                message: "Validation Error",
-                errors: [
-                    {
-                        field: "email",
-                        location: "body",
-                        messages: ['"email" already exists'],
-                    },
-                ],
-                status: httpStatus.CONFLICT,
-                isPublic: true,
-                stack: error.stack,
-            });
-        }
-        return error;
-    },
-
-    async oAuthLogin({ service, id, email, name, picture }) {
-        const user = await this.findOne({
-            $or: [{ [`services.${service}`]: id }, { email }],
-        });
-        if (user) {
-            user.services[service] = id;
-            if (!user.name) user.name = name;
-            if (!user.picture) user.picture = picture;
-            return user.save();
-        }
-        const password = uuidv4();
-        return this.create({
-            services: { [service]: id },
-            email,
-            password,
-            name,
-            picture,
-        });
-    },
-};
-
-const Diagnosis = mongoose.model("diagnosis", diagnosisSchema, "diagnosis")
-module.exports = { Diagnosis, Medicine }
+const PredictedResult = mongoose.model(
+	"PredictedResult",
+	imageSchema,
+	"predicted_result"
+)
+module.exports = { PredictedResult, ResultInfo }

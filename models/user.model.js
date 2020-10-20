@@ -4,11 +4,11 @@ const ENV_VAR = require("../config/vars")
 const moment = require("moment")
 
 class ListHistory {
-	constructor({ path, imageId, info }) {
+	constructor({ path, imageId, predictedInfo }) {
 		this.date = moment().format(ENV_VAR.DATE_FORMAT)
 		this.path = path
 		this.imageId = imageId
-		this.info = info
+		this.predictedInfo = predictedInfo
 		this.id = mongoose.Types.ObjectId()
 	}
 
@@ -18,7 +18,7 @@ class ListHistory {
 				id: this.id,
 				path: this.path,
 				imageId: this.imageId,
-				info: this.info,
+				predictedInfo: this.predictedInfo,
 			}],
 		}
 	}
@@ -27,10 +27,10 @@ class ListHistory {
 const userSchema = new Schema(
 	{
 		uid: { type: String, required: true },
-		name: { type: String },
+		name: { type: String, default: '' },
 		email: { type: String, match: /^\S+@\S+\.\S+$/, required: true },
-		avatar: { type: String },
-		history: { type: Array },
+		avatar: { type: String, default: ''},
+		history: { type: Array, default: [] },
 	},
 	{
 		timestamps: true,
@@ -60,6 +60,7 @@ userSchema.pre("save", async function save(next) {
  */
 userSchema.pre("update", async function (next) {
 	try {
+		this.updateAt = new Date()
 		if (!this.name || this.name.trim() === "") delete this.name
 		if (!this.avatar || this.avatar.trim() === "") delete this.avatar
 
@@ -75,7 +76,7 @@ userSchema.pre("update", async function (next) {
 userSchema.method({
 	transform() {
 		const transformed = {}
-		const fields = ["name", "email", "avatar", "history"]
+		const fields = ["uid","name", "email", "avatar", "history"]
 
 		fields.forEach((field) => {
 			transformed[field] = this[field]
@@ -86,7 +87,7 @@ userSchema.method({
 
 	adminRetrieve() {
 		const transformed = {}
-		const fields = ["id", "name", "email", "avatar"]
+		const fields = ["uid","id", "name", "email", "avatar"]
 
 		fields.forEach((field) => {
 			transformed[field] = this[field]
@@ -100,7 +101,7 @@ userSchema.method({
         const listDate = getListDateFromHistory(this.history)
 
 		if (listDate.includes(date))
-			return this.history[listDate.indexOf(date)][date].push(his[date])
+			return this.history[listDate.indexOf(date)][date].push(his[date][0])
 
 		return this.history.push(his)
 	},

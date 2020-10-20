@@ -1,5 +1,5 @@
 const { validationResult } = require("express-validator")
-const axiosServer = require("../config/axiosServer")
+const axiosAuth = require("../config/axiosAuth")
 const ROUTE_MAP = require("../config/urlBase")
 const responseReturn = require("../response/responseReturn")
 
@@ -10,7 +10,7 @@ exports.oAuth = async (req, res, next) => {
 		const token = authHeader && authHeader.split(" ")[1]
 		if (token == null) resReturn.success(req, res, 401, "Invalid Token")
 
-		const authenticatedUser = await axiosServer({
+		const authenticatedUser = await axiosAuth({
 			method: "GET",
 			url: "/auth/api/verify",
 			headers: {
@@ -20,9 +20,16 @@ exports.oAuth = async (req, res, next) => {
 
 		if (authenticatedUser.error)
 			resReturn.success(req, res, 401, "Verify failed")
-		req.body.userId = authenticatedUser.response.userId
-		req.body.role = authenticatedUser.response.role
-		next()
+
+		if (req.originalUrl === "/image/upload") {
+			req.userId = authenticatedUser.response.userId
+			req.role = authenticatedUser.response.role
+			await next()
+		} else {
+			req.body.userId = authenticatedUser.response.userId
+			req.body.role = authenticatedUser.response.role
+			await next()
+		}
 	} catch (errors) {
 		console.log(errors)
 	}
@@ -33,16 +40,16 @@ exports.oRegis = async (req, res, next) => {
 		const errors = validationResult(req)
 		let resReturn = new responseReturn()
 		if (!errors.isEmpty()) {
-			resReturn.failure(res, 500, errors.array())
+			resReturn.failure(req, res, 500, errors.array())
 			return
 		}
 
-		const {name, email, password} = req.body
+		const { name, email, password } = req.body
 
-		const authenticatedUser = await axiosServer({
+		const authenticatedUser = await axiosAuth({
 			method: ROUTE_MAP.USER.REGISTER.METHOD,
 			url: ROUTE_MAP.USER.REGISTER.PATH,
-			data:{name, email, password}
+			data: { name, email, password },
 		})
 
 		if (authenticatedUser.error)

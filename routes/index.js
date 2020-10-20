@@ -7,6 +7,6 @@ const router = express.Router();
 router.get('/status', (req, res) => res.json('OK'));
 
 router.use('/user', userRoutes);
-// router.use('/image', imageRoutes);
+router.use('/image', imageRoutes);
 
 module.exports = router;

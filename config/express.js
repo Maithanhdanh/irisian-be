@@ -9,13 +9,15 @@ const cookieParser = require("cookie-parser")
 const rfs = require('rotating-file-stream')
 const ENV_VAR = require('./vars')
 
+
 const accessLogStream = rfs.createStream('access.log', {
     interval: '30d', // rotate daily
     path: path.join(__dirname, '../')
   })
 
 app.use(cors({ origin: true, credentials: true }))
-app.use(express.json())
+app.use(express.urlencoded());
+app.use(express.json());
 app.use(cookieParser())
 
 if (ENV_VAR.NODE_ENV !== "test") {
@@ -34,7 +36,7 @@ app.use(
     })
 )
 
-app.use("/", router)
+app.use("/" ,router)
 
 const server = require("http").Server(app)
 

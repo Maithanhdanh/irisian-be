@@ -1,5 +1,5 @@
 const responseReturn = require("../response/responseReturn")
-const { User, ListHistory } = require("../models/user.model")
+const { User } = require("../models/user.model")
 const { validationResult } = require("express-validator")
 
 /**
@@ -13,7 +13,7 @@ const { validationResult } = require("express-validator")
  *
  * @return 200 - 'User is added' || 500 - errors
  **/
-exports.addUser = async (req, res, next) => {
+exports.addUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
@@ -48,7 +48,7 @@ exports.addUser = async (req, res, next) => {
  *
  * @return 200 - list of patient || 500 - errors
  **/
-exports.searchUser = async (req, res, next) => {
+exports.searchUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
@@ -77,7 +77,7 @@ exports.searchUser = async (req, res, next) => {
  *
  * @return 200 - patient's profile || 500 - errors
  **/
-exports.getUser = async (req, res, next) => {
+exports.getUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
@@ -93,8 +93,8 @@ exports.getUser = async (req, res, next) => {
 			resReturn.failure(req, res, 500, { message: "Inexistent User" })
 			return
 		}
-		doc.transform()
-		resReturn.success(req, res, 200, doc)
+		const transformedDoc = doc.transform()
+		resReturn.success(req, res, 200, transformedDoc)
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}
@@ -107,7 +107,7 @@ exports.getUser = async (req, res, next) => {
  *
  * @return 200 - patient's profile || 500 - errors
  **/
-exports.updateUser = async (req, res, next) => {
+exports.updateUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
@@ -127,8 +127,8 @@ exports.updateUser = async (req, res, next) => {
 			return
 		}
 
-		doc.transform()
-		resReturn.success(req, res, 200, doc)
+		const transformedDoc = doc.transform()
+		resReturn.success(req, res, 200, transformedDoc)
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}

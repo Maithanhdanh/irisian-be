@@ -1,24 +1,39 @@
-const { header, body, param, query } = require("express-validator");
+const { param, body } = require("express-validator");
 
-let addDiagnosis = () => {
+let authInfo = () => {
   return [
-    body(["patient_id"]).trim().exists().isString().notEmpty(),
-    body(["symptoms"]).exists().isArray().notEmpty(),
-    body(["medicine"]).isArray().exists().notEmpty(),
-    body(["numDates"]).trim().exists().isString().notEmpty(),
-    body(["userId"]).exists().notEmpty(),
+    body(["userId"]).exists().isString().notEmpty(),
   ];
 };
 
-let searchDiagnosis = () => {
+let getImage = () => {
   return [
-    body(["diagnosis_id"]).exists().isArray(),
+    body(["userId"]).exists().isString().notEmpty(),
+    param(["imageId"]).exists().isString().notEmpty(),
+  ];
+};
+
+let infoImage = () => {
+  return [
+    param(["imageId"]).exists().isString().notEmpty(),
+    body(["userId"]).exists().isString().notEmpty(),
+    body(["info"]).exists().notEmpty(),
+  ];
+};
+
+let findingsImage = () => {
+  return [
+    param(["imageId"]).exists().isString().notEmpty(),
+    body(["userId"]).exists().isString().notEmpty(),
+    body(["findings"]).exists().notEmpty(),
   ];
 };
 
 let validate = {
-    addDiagnosis: addDiagnosis,
-    searchDiagnosis: searchDiagnosis,
+  getImage:getImage,
+  authInfo:authInfo,
+  infoImage: infoImage,
+  findingsImage: findingsImage,
 };
 
 module.exports = { validate };
