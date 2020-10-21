@@ -1,6 +1,6 @@
 const express = require("express")
 const controller = require("../controllers/image.controller")
-const { oAuth } = require("../middlewares/oAth")
+const { oAuth } = require("../middlewares/oAuth")
 const {
 	uploadImage,
 	verifyImage,

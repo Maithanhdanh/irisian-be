@@ -1,5 +1,4 @@
 const { validationResult } = require("express-validator")
-const axiosAuth = require("../config/axiosAuth")
 const axiosML = require("../config/axiosML")
 const ROUTE_MAP = require("../config/urlBase")
 const responseReturn = require("../response/responseReturn")
@@ -22,7 +21,6 @@ exports.uploadImage = async (req, res, next) => {
 		const file = req.file
 		const stream = fs.createReadStream(file.path)
 		form_data.append("file", stream)
-
 		const formHeaders = form_data.getHeaders()
 
 		const response = await axiosML({
@@ -40,7 +38,7 @@ exports.uploadImage = async (req, res, next) => {
 		await fs.unlinkSync(file.path)
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		resReturn.failure(req, res, 500, errors.message)
 	}
 }
 

@@ -27,7 +27,7 @@ describe("Image model", () => {
 			})
 			const transformedDoc = image.transform()
 
-			expect(Object.keys(transformedDoc).length).toBe(6)
+			expect(Object.keys(transformedDoc).length).toBe(5)
 			expect(transformedDoc).not.toHaveProperty("_id")
 			expect(moment(transformedDoc.date, "DD/MM/YYYY", true).isValid()).toBe(
 				true

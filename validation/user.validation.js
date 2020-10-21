@@ -7,7 +7,14 @@ let addAuthUser = () => {
 	]
 }
 
-let addUser = () => {
+let loginUser = () => {
+	return [
+		body(["email"]).trim().exists().isString().notEmpty(),
+		body(["password"]).trim().exists().isString().notEmpty(),
+	]
+}
+
+let verifiedUser = () => {
 	return [
 		body(["_id"]).trim().exists().isString().notEmpty(),
 		body(["email"]).trim().exists().isString().notEmpty(),
@@ -39,8 +46,9 @@ let updateUser = () => {
 }
 
 let validate = {
+	loginUser:loginUser,
 	addAuthUser:addAuthUser,
-	addUser:addUser,
+	verifiedUser:verifiedUser,
 	searchUser: searchUser,
 	getUser: getUser,
 	updateUser: updateUser,

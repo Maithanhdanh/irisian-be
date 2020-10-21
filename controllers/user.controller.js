@@ -27,10 +27,28 @@ exports.addUser = async (req, res) => {
 		const newUser = new User({ uid, email, name, role })
 		const doc = await newUser.save()
 
-		resReturn.success(req, res, 200, {
-			message: "User is added",
-			patientID: doc.id,
-		})
+		resReturn.success(req, res, 200, doc)
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
+
+
+exports.loginUser = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 500, errors.array())
+		return
+	}
+
+	const { _id:uid, email, role } = req.body
+
+	try {
+		const doc = await User.get(uid)
+		const transformedDoc = doc.transform()
+
+		resReturn.success(req, res, 200,transformedDoc)
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}
@@ -123,7 +141,7 @@ exports.updateUser = async (req, res) => {
 			avatar: avatar,
 		})
 		if (doc === null) {
-			resReturn.success(req, res, 500, { message: "Inexistent User" })
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
 			return
 		}
 

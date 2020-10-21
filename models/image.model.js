@@ -62,7 +62,6 @@ imageSchema.pre("update", async function (next) {
 	}
 })
 
-
 /**
  * Methods
  */
@@ -73,7 +72,6 @@ imageSchema.method({
 		const fields = [
 			"imageId",
 			"noBackgroundImageId",
-			"status",
 			"ownerId",
 			"date",
 			"result",
@@ -130,29 +128,16 @@ imageSchema.statics = {
 	 * @param {number} limit - Limit number of Results to be returned.
 	 * @returns {Promise<Result[]>}
 	 */
-	async list({ page = 1, perPage = 30, term }) {
-		const reg = new RegExp(term, "i")
-		return this.aggregate([
-			{
-				$project: {
-					fullname: { $concat: ["$firstname", " ", "$lastname"] },
-					fullname1: { $concat: ["$lastname", " ", "$firstname"] },
-					firstname: 1,
-					lastname: 1,
-					picture: 1,
-					id: "$_id",
-				},
-			},
-			{ $match: { $or: [{ fullname: reg }, { fullname1: reg }] } },
-			{
-				$project: {
-					fullname: 0,
-					fullname1: 0,
-					_id: 0,
-				},
-			},
-		])
+	async list({ page = 1, perPage = 5, id }) {
+		const listHistory = await this.find({ ownerId: id })
+			.skip((page - 1) * perPage)
+			.limit(perPage)
+			.sort({ date: "descending" })
+
+			const transformedList = listHistory.map(his => his.transform())
+		return transformedList
 	},
+	
 	async update(id, { ...data }) {
 		try {
 			let image

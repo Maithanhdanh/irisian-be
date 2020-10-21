@@ -1,6 +1,6 @@
 const logger = require("../config/logger")
 
-function responseReturn() {}
+class responseReturn {}
 
 responseReturn.prototype.success = function (req, res, statusCode, message) {
     logger.info(

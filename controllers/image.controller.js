@@ -52,7 +52,7 @@ exports.importImage = async (req, res) => {
 
 		resReturn.success(req, res, 200, {
 			message: "new Image is added",
-			image: transformedDoc,
+			data: transformedDoc,
 		})
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
@@ -94,7 +94,7 @@ exports.importInfo = async (req, res) => {
 
 		resReturn.success(req, res, 200, {
 			message: "Updated info",
-			image: predictedResult.result.info,
+			data: predictedResult.result.info,
 		})
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
@@ -133,7 +133,7 @@ exports.importFindings = async (req, res) => {
 
 		resReturn.success(req, res, 200, {
 			message: "Updated info",
-			findings: predictedResult.result.findings,
+			data: predictedResult.result.findings,
 		})
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)

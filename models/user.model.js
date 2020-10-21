@@ -2,24 +2,26 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const ENV_VAR = require("../config/vars")
 const moment = require("moment")
-
+const { PredictedResult, ResultInfo } = require ('./image.model')
 class ListHistory {
 	constructor({ path, imageId, predictedInfo }) {
 		this.date = moment().format(ENV_VAR.DATE_FORMAT)
 		this.path = path
-		this.imageId = imageId
+		this.imageId = imageId.replace("/image/", "")
 		this.predictedInfo = predictedInfo
 		this.id = mongoose.Types.ObjectId()
 	}
 
 	get history() {
 		return {
-			[this.date]: [{
-				id: this.id,
-				path: this.path,
-				imageId: this.imageId,
-				predictedInfo: this.predictedInfo,
-			}],
+			[this.date]: [
+				{
+					id: this.id,
+					path: this.path,
+					imageId: this.imageId,
+					predictedInfo: this.predictedInfo,
+				},
+			],
 		}
 	}
 }
@@ -27,9 +29,9 @@ class ListHistory {
 const userSchema = new Schema(
 	{
 		uid: { type: String, required: true },
-		name: { type: String, default: '' },
+		name: { type: String, default: "" },
 		email: { type: String, match: /^\S+@\S+\.\S+$/, required: true },
-		avatar: { type: String, default: ''},
+		avatar: { type: String, default: "" },
 		history: { type: Array, default: [] },
 	},
 	{
@@ -39,13 +41,6 @@ const userSchema = new Schema(
 
 userSchema.pre("save", async function save(next) {
 	try {
-		//   if (!this.isModified("password")) return next();
-
-		//   const rounds = env === "test" ? 1 : 10;
-
-		//   const hash = await bcrypt.hash(this.password, rounds);
-		//   this.password = hash;
-
 		return next()
 	} catch (error) {
 		return next(error)
@@ -76,7 +71,7 @@ userSchema.pre("update", async function (next) {
 userSchema.method({
 	transform() {
 		const transformed = {}
-		const fields = ["uid","name", "email", "avatar", "history"]
+		const fields = ["uid", "name", "email", "avatar", "history"]
 
 		fields.forEach((field) => {
 			transformed[field] = this[field]
@@ -87,7 +82,7 @@ userSchema.method({
 
 	adminRetrieve() {
 		const transformed = {}
-		const fields = ["uid","id", "name", "email", "avatar"]
+		const fields = ["uid", "id", "name", "email", "avatar"]
 
 		fields.forEach((field) => {
 			transformed[field] = this[field]
@@ -98,7 +93,7 @@ userSchema.method({
 
 	mergeHistory(his) {
 		const date = Object.keys(his)
-        const listDate = getListDateFromHistory(this.history)
+		const listDate = getListDateFromHistory(this.history)
 
 		if (listDate.includes(date))
 			return this.history[listDate.indexOf(date)][date].push(his[date][0])
@@ -108,7 +103,7 @@ userSchema.method({
 })
 
 const getListDateFromHistory = (history) => {
-    return history.map((eachHis) => Object.keys(eachHis)[0])
+	return history.map((eachHis) => Object.keys(eachHis)[0])
 }
 /**
  * Statics
@@ -138,39 +133,41 @@ userSchema.statics = {
 			let user
 
 			if (mongoose.Types.ObjectId.isValid(id)) {
-				user = await this.findOne({uid:id}).exec()
+				user = await this.findOne({ uid: id }).exec()
 			}
 			if (user) {
+				// const listHistory = await PredictedResult.list({id:user.uid})
+				// user.recent_activities = listHistory
 				return user
 			}
 
-			throw new Error({message: "User does not exist"})
+			throw new Error({ message: "User does not exist" })
 		} catch (error) {
 			throw error
 		}
 	},
 
-	async update(id, {...data}) {
+	async update(id, { ...data }) {
 		try {
 			let user
 
 			if (mongoose.Types.ObjectId.isValid(id)) {
-				user = await this.findOne({uid:id}).exec()
+				user = await this.findOne({ uid: id }).exec()
 			}
 			if (user) {
 				const keys = Object.keys(data)
-				keys.map(key => {
+				keys.map((key) => {
 					user[key] = data[key]
 				})
 				user.save()
 				return user
 			}
 
-			throw new Error({message: "User does not exist"})
+			throw new Error({ message: "User does not exist" })
 		} catch (error) {
 			throw error
 		}
-	}
+	},
 }
 
 const User = mongoose.model("profile", userSchema, "user")

@@ -8,7 +8,7 @@ exports.oAuth = async (req, res, next) => {
 		let resReturn = new responseReturn()
 		const authHeader = req.headers["authorization"]
 		const token = authHeader && authHeader.split(" ")[1]
-		if (token == null) resReturn.success(req, res, 401, "Invalid Token")
+		if (token == null) resReturn.failure(req, res, 401, "Invalid Token")
 
 		const authenticatedUser = await axiosAuth({
 			method: "GET",
@@ -19,7 +19,7 @@ exports.oAuth = async (req, res, next) => {
 		})
 
 		if (authenticatedUser.error)
-			resReturn.success(req, res, 401, "Verify failed")
+			resReturn.failure(req, res, 401, "Verify failed")
 
 		if (req.originalUrl === "/image/upload") {
 			req.userId = authenticatedUser.response.userId
@@ -30,6 +30,33 @@ exports.oAuth = async (req, res, next) => {
 			req.body.role = authenticatedUser.response.role
 			await next()
 		}
+	} catch (errors) {
+		console.log(errors)
+	}
+}
+
+exports.Login = async (req, res, next) => {
+	try {
+		const errors = validationResult(req)
+		let resReturn = new responseReturn()
+		if (!errors.isEmpty()) {
+			resReturn.failure(req, res, 500, errors.array())
+			return
+		}
+
+		const { email, password } = req.body
+
+		const authenticatedUser = await axiosAuth({
+			method: ROUTE_MAP.USER.REGISTER.METHOD,
+			url: ROUTE_MAP.USER.REGISTER.PATH,
+			data: { email, password },
+		})
+
+		if (authenticatedUser.error)
+			resReturn.failure(req, res, 401, "Verify failed")
+		req.body._id = authenticatedUser.response.user._id
+		req.body.role = authenticatedUser.response.user.role
+		next()
 	} catch (errors) {
 		console.log(errors)
 	}
@@ -53,7 +80,7 @@ exports.oRegis = async (req, res, next) => {
 		})
 
 		if (authenticatedUser.error)
-			resReturn.success(req, res, 401, "Verify failed")
+			resReturn.failure(req, res, 401, "Verify failed")
 		req.body._id = authenticatedUser.response.user._id
 		req.body.role = authenticatedUser.response.user.role
 		next()
