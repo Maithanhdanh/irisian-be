@@ -18,16 +18,16 @@ exports.oAuth = async (req, res, next) => {
 			},
 		})
 
-		if (authenticatedUser.data.error)
+		if (authenticatedUser.error)
 			resReturn.failure(req, res, 401, "Verify failed")
 
 		if (req.originalUrl === "/image/upload") {
-			req.userId = authenticatedUser.data.response.userId
-			req.role = authenticatedUser.data.response.role
+			req.userId = authenticatedUser.response.user._id
+			req.role = authenticatedUser.response.user.role
 			await next()
 		} else {
-			req.body.userId = authenticatedUser.data.response.userId
-			req.body.role = authenticatedUser.data.response.role
+			req.body.userId = authenticatedUser.response.user._id
+			req.body.role = authenticatedUser.response.user.role
 			await next()
 		}
 	} catch (errors) {
@@ -52,21 +52,16 @@ exports.Login = async (req, res, next) => {
 			data: { email, password },
 		})
 
-		if (authenticatedUser.data.error)
-			resReturn.failure(req, res, 401, "Verify failed")
-
-		if (!authenticatedUser.cookie.refresh_token)
+		if (authenticatedUser.error)
 			resReturn.failure(req, res, 401, "Verify failed")
 
 		req.body = {
-			_id: authenticatedUser.data.response.user._id,
-			role: authenticatedUser.data.response.user.role,
-			accessToken: authenticatedUser.data.response.accessToken,
-			expiresIn: authenticatedUser.data.response.expiresIn,
-			refreshToken_expiresIn:
-				authenticatedUser.data.response.refreshToken_expiresIn,
-			refresh_token: authenticatedUser.cookie.refresh_token,
-			"connect.sid": authenticatedUser.cookie["connect.sid"],
+			_id: authenticatedUser.response.user._id,
+			role: authenticatedUser.response.user.role,
+			accessToken: authenticatedUser.response.accessToken,
+			expiresIn: authenticatedUser.response.expiresIn,
+			refreshToken_expiresIn: authenticatedUser.response.refreshToken_expiresIn,
+			refreshToken: authenticatedUser.response.refreshToken,
 		}
 
 		next()
@@ -92,22 +87,18 @@ exports.oRegis = async (req, res, next) => {
 			data: { name, email, password },
 		})
 
-		if (authenticatedUser.data.error)
-			return resReturn.failure(req, res, 401, "Verify failed")
-
-		if (!authenticatedUser.cookie.refresh_token)
+		if (authenticatedUser.error)
 			return resReturn.failure(req, res, 401, "Verify failed")
 
 		req.body = {
-			_id: authenticatedUser.data.response.user._id,
-			email: authenticatedUser.data.response.user.email,
-			name: authenticatedUser.data.response.user.name,
-			role: authenticatedUser.data.response.user.role,
-			accessToken: authenticatedUser.data.response.accessToken,
-			expiresIn: authenticatedUser.data.response.expiresIn,
-			refreshToken_expiresIn:
-				authenticatedUser.data.response.refreshToken_expiresIn,
-			refresh_token: authenticatedUser.cookie.refresh_token,
+			_id: authenticatedUser.response.user._id,
+			email: authenticatedUser.response.user.email,
+			name: authenticatedUser.response.user.name,
+			role: authenticatedUser.response.user.role,
+			accessToken: authenticatedUser.response.accessToken,
+			expiresIn: authenticatedUser.response.expiresIn,
+			refreshToken_expiresIn: authenticatedUser.response.refreshToken_expiresIn,
+			refreshToken: authenticatedUser.response.refreshToken,
 		}
 
 		next()

@@ -16,7 +16,7 @@ const { validationResult } = require("express-validator")
  **/
 exports.importImage = async (req, res) => {
 	let resReturn = new responseReturn()
-	if (!req.userId | (req.userId === ""))
+	if (!req.userId | (req.userId === {}))
 		return resReturn.failure(req, res, 422, "no User detected")
 	try {
 		const ownerId = req.userId

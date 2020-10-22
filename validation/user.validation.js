@@ -23,7 +23,7 @@ let verifiedUserForNewUser = () => {
 		body(["accessToken"]).trim().exists().isString().notEmpty(),
 		body(["expiresIn"]).trim().exists().isNumeric().notEmpty(),
 		body(["refreshToken_expiresIn"]).trim().exists().isNumeric().notEmpty(),
-		body(["refresh_token"]).exists().isString().notEmpty(),
+		body(["refreshToken"]).exists().isString().notEmpty(),
 	]
 }
 
@@ -34,8 +34,7 @@ let verifiedUserForLogin = () => {
 		body(["accessToken"]).trim().exists().isString().notEmpty(),
 		body(["expiresIn"]).trim().exists().isNumeric().notEmpty(),
 		body(["refreshToken_expiresIn"]).trim().exists().isNumeric().notEmpty(),
-		body(["refresh_token"]).exists().isString().notEmpty(),
-		body(["connect.sid"]).exists().isString().notEmpty()
+		body(["refreshToken"]).exists().isString().notEmpty()
 	]
 }
 

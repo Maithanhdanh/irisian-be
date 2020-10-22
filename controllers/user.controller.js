@@ -73,14 +73,10 @@ exports.loginUser = async (req, res) => {
 		accessToken,
 		expiresIn,
 		refreshToken_expiresIn,
-		refresh_token,
+		refreshToken,
 	} = req.body
 
-	res.cookie("refresh_token", refresh_token, {
-		httpOnly: true,
-		maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
-	})
-	res.cookie("connect.sid", req.body['connect.sid'], {
+	res.cookie("refresh_token", refreshToken, {
 		httpOnly: true,
 		maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
 	})
