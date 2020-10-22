@@ -6,11 +6,11 @@ const router = express.Router()
 
 router
 	.route("/add")
-	.post(validate.addAuthUser(), oRegis, validate.verifiedUser(), controller.addUser)
+	.post(validate.addAuthUser(), oRegis, validate.verifiedUserForNewUser(), controller.addUser)
 
 router
 	.route("/login")
-	.post(validate.loginUser(), Login, validate.verifiedUser(), controller.loginUser)
+	.post(validate.loginUser(), Login, validate.verifiedUserForLogin(), controller.loginUser)
 
 router.route("/search").get(oAuth, validate.searchUser(), controller.searchUser)
 

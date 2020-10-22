@@ -1,4 +1,4 @@
-const { body, query, param } = require("express-validator")
+const { body, query, param, cookie } = require("express-validator")
 
 let addAuthUser = () => {
 	return [
@@ -14,11 +14,28 @@ let loginUser = () => {
 	]
 }
 
-let verifiedUser = () => {
+let verifiedUserForNewUser = () => {
 	return [
 		body(["_id"]).trim().exists().isString().notEmpty(),
 		body(["email"]).trim().exists().isString().notEmpty(),
+		body(["name"]).trim().exists().isString().notEmpty(),
 		body(["role"]).trim().exists().isString().notEmpty(),
+		body(["accessToken"]).trim().exists().isString().notEmpty(),
+		body(["expiresIn"]).trim().exists().isNumeric().notEmpty(),
+		body(["refreshToken_expiresIn"]).trim().exists().isNumeric().notEmpty(),
+		body(["refresh_token"]).exists().isString().notEmpty(),
+	]
+}
+
+let verifiedUserForLogin = () => {
+	return [
+		body(["_id"]).trim().exists().isString().notEmpty(),
+		body(["role"]).trim().exists().isString().notEmpty(),
+		body(["accessToken"]).trim().exists().isString().notEmpty(),
+		body(["expiresIn"]).trim().exists().isNumeric().notEmpty(),
+		body(["refreshToken_expiresIn"]).trim().exists().isNumeric().notEmpty(),
+		body(["refresh_token"]).exists().isString().notEmpty(),
+		body(["connect.sid"]).exists().isString().notEmpty()
 	]
 }
 
@@ -48,7 +65,8 @@ let updateUser = () => {
 let validate = {
 	loginUser:loginUser,
 	addAuthUser:addAuthUser,
-	verifiedUser:verifiedUser,
+	verifiedUserForNewUser:verifiedUserForNewUser,
+	verifiedUserForLogin:verifiedUserForLogin,
 	searchUser: searchUser,
 	getUser: getUser,
 	updateUser: updateUser,

@@ -1,7 +1,7 @@
 const responseReturn = require("../response/responseReturn")
 const { User } = require("../models/user.model")
 const { validationResult } = require("express-validator")
-
+const ENV_VAR = require("../config/vars")
 /**
  * ADD PATIENT
  *
@@ -21,18 +21,43 @@ exports.addUser = async (req, res) => {
 		return
 	}
 
-	const { _id:uid, email, name, role } = req.body
+	const {
+		_id: uid,
+		role,
+		email,
+		name,
+		accessToken,
+		expiresIn,
+		refreshToken_expiresIn,
+		refresh_token,
+	} = req.body
 
 	try {
+		const existUser = await User.getUserDetail(email)
+		if (existUser != null) {
+			resReturn.failure(req, res, 406, "Existed User")
+			return
+		}
+
 		const newUser = new User({ uid, email, name, role })
 		const doc = await newUser.save()
+		const transformedDoc = doc.transform({
+			role,
+			accessToken,
+			expiresIn,
+			refreshToken_expiresIn,
+		})
 
-		resReturn.success(req, res, 200, doc)
+		res.cookie("refresh_token", refresh_token, {
+			httpOnly: true,
+			maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
+		})
+
+		resReturn.success(req, res, 200, transformedDoc)
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}
 }
-
 
 exports.loginUser = async (req, res) => {
 	const errors = validationResult(req)
@@ -42,13 +67,35 @@ exports.loginUser = async (req, res) => {
 		return
 	}
 
-	const { _id:uid, email, role } = req.body
+	const {
+		_id: uid,
+		role,
+		accessToken,
+		expiresIn,
+		refreshToken_expiresIn,
+		refresh_token,
+	} = req.body
+
+	res.cookie("refresh_token", refresh_token, {
+		httpOnly: true,
+		maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
+	})
+	res.cookie("connect.sid", req.body['connect.sid'], {
+		httpOnly: true,
+		maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
+	})
 
 	try {
 		const doc = await User.get(uid)
-		const transformedDoc = doc.transform()
+		if(doc == null) return resReturn.failure(req, res, 400, 'User not found')
+		const transformedDoc = doc.transform({
+			role,
+			accessToken,
+			expiresIn,
+			refreshToken_expiresIn,
+		})
 
-		resReturn.success(req, res, 200,transformedDoc)
+		resReturn.success(req, res, 200, transformedDoc)
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}
@@ -75,11 +122,11 @@ exports.searchUser = async (req, res) => {
 	}
 
 	const { name, email } = req.query
-    console.log(name, email)
+	console.log(name, email)
 	try {
 		const docs = await User.find({
-			name: { $regex: `.*${name}.*`,  '$options' : 'i' },
-			email: { $regex: `.*${email}.*`,  '$options' : 'i' },
+			name: { $regex: `.*${name}.*`, $options: "i" },
+			email: { $regex: `.*${email}.*`, $options: "i" },
 		})
 
 		resReturn.success(req, res, 200, docs)
@@ -136,7 +183,7 @@ exports.updateUser = async (req, res) => {
 	const { userId, name, avatar } = req.body
 
 	try {
-		const doc = await User.update(userId,{
+		const doc = await User.update(userId, {
 			name: name,
 			avatar: avatar,
 		})

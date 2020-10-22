@@ -2,7 +2,7 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const ENV_VAR = require("../config/vars")
 const moment = require("moment")
-const { PredictedResult, ResultInfo } = require ('./image.model')
+const { PredictedResult, ResultInfo } = require("./image.model")
 class ListHistory {
 	constructor({ path, imageId, predictedInfo }) {
 		this.date = moment().format(ENV_VAR.DATE_FORMAT)
@@ -69,14 +69,23 @@ userSchema.pre("update", async function (next) {
  * Methods
  */
 userSchema.method({
-	transform() {
+	transform(data = {}) {
 		const transformed = {}
-		const fields = ["uid", "name", "email", "avatar", "history"]
+		const user = {}
+		const keysData = Object.keys(data)
 
-		fields.forEach((field) => {
-			transformed[field] = this[field]
+		const fields = ["uid", "name", "email", "avatar", "history"]
+		const allFields = [...fields, ...keysData]
+
+		allFields.forEach((field) => {
+			if (fields.includes(field)) {
+				user[field] = this[field] ? this[field] : data[field]
+			} else {
+				transformed[field] = this[field] ? this[field] : data[field]
+			}
 		})
 
+		transformed.user = user
 		return transformed
 	},
 
