@@ -1,16 +1,28 @@
 const express = require("express")
 const controller = require("../controllers/user.controller")
-const { oAuth, oRegis, Login } = require("../middlewares/oAuth")
+const { oAuth, oRegis, Login, oGetToken } = require("../middlewares/oAuth")
 const { validate } = require("../validation/user.validation")
 const router = express.Router()
 
 router
 	.route("/add")
-	.post(validate.addAuthUser(), oRegis, validate.verifiedUserForNewUser(), controller.addUser)
+	.post(
+		validate.addAuthUser(),
+		oRegis,
+		validate.verifiedUserForNewUser(),
+		controller.addUser
+	)
 
+router.route("/token").get(validate.token(), oGetToken, controller.getToken)
+router.route("/logout").get(validate.token(),controller.RemoveToken)
 router
 	.route("/login")
-	.post(validate.loginUser(), Login, validate.verifiedUserForLogin(), controller.loginUser)
+	.post(
+		validate.loginUser(),
+		Login,
+		validate.verifiedUserForLogin(),
+		controller.loginUser
+	)
 
 router.route("/search").get(oAuth, validate.searchUser(), controller.searchUser)
 

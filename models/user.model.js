@@ -3,6 +3,9 @@ const Schema = mongoose.Schema
 const ENV_VAR = require("../config/vars")
 const moment = require("moment")
 const { PredictedResult, ResultInfo } = require("./image.model")
+const axiosAuth = require("../config/axiosAuth")
+const ROUTE_MAP = require("../config/urlBase")
+
 class ListHistory {
 	constructor({ path, imageId, predictedInfo }) {
 		this.date = moment().format(ENV_VAR.DATE_FORMAT)
@@ -53,11 +56,22 @@ userSchema.pre("save", async function save(next) {
  * - validations
  * - virtual
  */
-userSchema.pre("update", async function (next) {
+userSchema.pre("findOneAndUpdate", async function (next) {
 	try {
 		this.updateAt = new Date()
 		if (!this.name || this.name.trim() === "") delete this.name
 		if (!this.avatar || this.avatar.trim() === "") delete this.avatar
+
+		const data = {
+			userId:this._conditions.uid,name:this._update.name
+		}
+		const res = await axiosAuth({
+			method: ROUTE_MAP.USER.UPDATE.METHOD,
+			url: ROUTE_MAP.USER.UPDATE.PATH,
+			data:data
+		})
+
+		if(res.error) resReturn.failure(req, res, 500, "Update Info failed")
 
 		return next()
 	} catch (error) {
@@ -74,7 +88,7 @@ userSchema.method({
 		const user = {}
 		const keysData = Object.keys(data)
 
-		const fields = ["uid", "name", "email", "avatar", "history"]
+		const fields = ["uid", "name", "email", "avatar", "history", "recent_activities"]
 		const allFields = [...fields, ...keysData]
 
 		allFields.forEach((field) => {

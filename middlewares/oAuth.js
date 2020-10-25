@@ -106,4 +106,44 @@ exports.oRegis = async (req, res, next) => {
 		resReturn.failure(req, res, 500, errors)
 	}
 }
+
+exports.oGetToken = async (req, res, next) => {
+	let resReturn = new responseReturn()
+	try {
+		const errors = validationResult(req)
+		if (!errors.isEmpty()) {
+			resReturn.failure(req, res, 500, errors.array())
+			return
+		}
+
+		const {refresh_token} = req.cookies
+		if (!refresh_token) return resReturn.failure(req, res, 401, "Verify failed")
+
+		const authenticatedUser = await axiosAuth({
+			method: ROUTE_MAP.USER.TOKEN.METHOD,
+			url: ROUTE_MAP.USER.TOKEN.PATH,
+			data: { refresh_token },
+			headers: {
+                Cookie: `refresh_token=${refresh_token}`
+            }
+		})
+
+		if (authenticatedUser.error)
+			return resReturn.failure(req, res, 401, "Verify failed")
+
+		req.body = {
+			_id: authenticatedUser.response.user._id,
+			email: authenticatedUser.response.user.email,
+			name: authenticatedUser.response.user.name,
+			role: authenticatedUser.response.user.role,
+			accessToken: authenticatedUser.response.accessToken,
+			expiresIn: authenticatedUser.response.expiresIn,
+		}
+
+		next()
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
+
 // module.exports = oAuth

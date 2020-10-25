@@ -9,7 +9,7 @@ const axiosAuth = axios.create({
 		"Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
 		"Access-Control-Allow-Credentials": true,
 	},
-	withCredentials: "include",
+	withCredentials: "true",
 	paramsSerializer: (params) => queryString.stringify(params),
 })
 

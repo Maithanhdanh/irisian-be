@@ -17,7 +17,7 @@ exports.addUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 
@@ -63,7 +63,7 @@ exports.loginUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 
@@ -83,7 +83,7 @@ exports.loginUser = async (req, res) => {
 
 	try {
 		const doc = await User.get(uid)
-		if(doc == null) return resReturn.failure(req, res, 400, 'User not found')
+		if (doc == null) return resReturn.failure(req, res, 400, "User not found")
 		const transformedDoc = doc.transform({
 			role,
 			accessToken,
@@ -113,7 +113,7 @@ exports.searchUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 
@@ -142,7 +142,7 @@ exports.getUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 
@@ -172,18 +172,22 @@ exports.updateUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 
 	const { userId, name, avatar } = req.body
 
 	try {
-		const doc = await User.update(userId, {
-			name: name,
-			avatar: avatar,
-		})
-		if (doc === null) {
+		const doc = await User.findOneAndUpdate(
+			{ uid: userId },
+			{
+				name: name,
+				avatar: avatar,
+			},
+			{ useFindAndModify: false }
+		)
+		if (!doc) {
 			resReturn.failure(req, res, 500, { message: "Inexistent User" })
 			return
 		}
@@ -193,4 +197,46 @@ exports.updateUser = async (req, res) => {
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}
+}
+
+exports.getToken = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 401, errors.array())
+		return
+	}
+
+	const { _id: uid, role, accessToken, expiresIn } = req.body
+
+	try {
+		const doc = await User.get(uid)
+		if (!doc) return resReturn.failure(req, res, 400, "User not found")
+
+		const transformedDoc = doc.transform({
+			role,
+			accessToken,
+			expiresIn,
+		})
+
+		resReturn.success(req, res, 200, transformedDoc)
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}
+
+exports.RemoveToken = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 500, errors.array())
+		return
+	}
+
+	const cookies = req.cookies.refresh_token
+	if (!cookies) return res.sendStatus(401)
+
+	res.cookie("refresh_token", "", { maxAge: 0 })
+
+	resReturn.success(req, res, 200, "Removed Token")
 }

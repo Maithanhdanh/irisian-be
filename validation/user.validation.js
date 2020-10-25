@@ -7,6 +7,12 @@ let addAuthUser = () => {
 	]
 }
 
+let token = () => {
+    return [
+        cookie(['refresh_token']).exists().notEmpty()
+    ]
+}
+
 let loginUser = () => {
 	return [
 		body(["email"]).trim().exists().isString().notEmpty(),
@@ -62,6 +68,7 @@ let updateUser = () => {
 }
 
 let validate = {
+	token:token,
 	loginUser:loginUser,
 	addAuthUser:addAuthUser,
 	verifiedUserForNewUser:verifiedUserForNewUser,

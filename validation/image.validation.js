@@ -1,4 +1,4 @@
-const { param, body } = require("express-validator");
+const { param, body, query } = require("express-validator");
 
 let authInfo = () => {
   return [
@@ -10,6 +10,14 @@ let getImage = () => {
   return [
     body(["userId"]).exists().isString().notEmpty(),
     param(["imageId"]).exists().isString().notEmpty(),
+  ];
+};
+
+let getList = () => {
+  return [
+    body(["userId"]).exists().isString().notEmpty(),
+    query(["page"]).exists().isString(),
+    query(["perPage"]).exists().isString(),
   ];
 };
 
@@ -30,6 +38,7 @@ let findingsImage = () => {
 };
 
 let validate = {
+  getList:getList,
   getImage:getImage,
   authInfo:authInfo,
   infoImage: infoImage,

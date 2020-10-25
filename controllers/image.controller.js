@@ -166,3 +166,27 @@ exports.getImage = async (req, res) => {
 		resReturn.failure(req, res, 500, errors)
 	}
 }
+
+exports.getList = async (req, res) => {
+	const errors = validationResult(req)
+	let resReturn = new responseReturn()
+	if (!errors.isEmpty()) {
+		resReturn.failure(req, res, 500, errors.array())
+		return
+	}
+
+	try {
+		const { userId: ownerId } = req.body
+
+		const existUser = await User.get(ownerId)
+		if (existUser === null) {
+			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			return
+		}
+
+		const doc = await PredictedResult.list({ id:ownerId, ...req.query })
+		resReturn.success(req, res, 200, doc)
+	} catch (errors) {
+		resReturn.failure(req, res, 500, errors)
+	}
+}

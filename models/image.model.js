@@ -128,10 +128,26 @@ imageSchema.statics = {
 	 * @param {number} limit - Limit number of Results to be returned.
 	 * @returns {Promise<Result[]>}
 	 */
-	async list({ page = 1, perPage = 5, id }) {
-		const listHistory = await this.find({ ownerId: id })
-			.skip((page - 1) * perPage)
-			.limit(perPage)
+	async list({ page = 1, perPage = 10, id, ...data }) {
+		const keys = Object.keys(data)  
+		const queryString = {}
+
+		keys.map((key) => {
+			if(key === "date") {
+				return queryString["createdAt"] = {"$gte": new Date(data[key][0]), "$lt": new Date(data[key][1])}
+			} else if(key === "disease"){
+				if(typeof data[key] === 'string') data[key] = [data[key]]
+				data[key].map((item)=>{
+					return queryString[`result.findings.${item}`] = {"$gte": ENV_VAR.SEARCH_IMAGE_THRESHOLD}
+				})
+				return
+			}
+			queryString[key]=data[key]
+		})
+
+		const listHistory = await this.find({ ownerId:id, ...queryString })
+			.skip((parseInt(page) - 1) * parseInt(perPage))
+			.limit(parseInt(perPage))
 			.sort({ date: "descending" })
 
 			const transformedList = listHistory.map(his => his.transform())
