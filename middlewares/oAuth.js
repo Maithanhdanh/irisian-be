@@ -122,7 +122,6 @@ exports.oGetToken = async (req, res, next) => {
 		const authenticatedUser = await axiosAuth({
 			method: ROUTE_MAP.USER.TOKEN.METHOD,
 			url: ROUTE_MAP.USER.TOKEN.PATH,
-			data: { refresh_token },
 			headers: {
                 Cookie: `refresh_token=${refresh_token}`
             }

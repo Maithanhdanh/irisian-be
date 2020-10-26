@@ -176,6 +176,7 @@ exports.getList = async (req, res) => {
 	}
 
 	try {
+		const {page, perPage} = req.query
 		const { userId: ownerId } = req.body
 
 		const existUser = await User.get(ownerId)
@@ -185,7 +186,13 @@ exports.getList = async (req, res) => {
 		}
 
 		const doc = await PredictedResult.list({ id:ownerId, ...req.query })
-		resReturn.success(req, res, 200, doc)
+		const paginatedDoc = doc.slice((page-1)*perPage, page*perPage)
+
+		resReturn.success(req, res, 200, {
+			nextPage: parseInt(page) + 1,
+			totalPages:Math.ceil(doc.length/parseInt(perPage)),
+			images:paginatedDoc
+		})
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
 	}

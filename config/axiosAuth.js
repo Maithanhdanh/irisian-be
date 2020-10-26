@@ -2,7 +2,7 @@ const axios = require("axios")
 const ENV_VAR = require("./vars")
 
 const axiosAuth = axios.create({
-	baseURL: ENV_VAR.AUTHENTICATE_URL_DEV,
+	baseURL: ENV_VAR.AUTHENTICATE_URL,
 	headers: {
 		"Content-Type": "application/json",
 		"Access-Control-Allow-Origin": "*",

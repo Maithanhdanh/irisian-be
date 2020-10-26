@@ -134,7 +134,7 @@ imageSchema.statics = {
 
 		keys.map((key) => {
 			if(key === "date") {
-				return queryString["createdAt"] = {"$gte": new Date(data[key][0]), "$lt": new Date(data[key][1])}
+				return queryString["createdAt"] = {"$gte": (new Date(data[key][0])).setHours(0,0,0,0), "$lte": (new Date(data[key][1]).setHours(23,59,59,999))}
 			} else if(key === "disease"){
 				if(typeof data[key] === 'string') data[key] = [data[key]]
 				data[key].map((item)=>{
@@ -146,8 +146,6 @@ imageSchema.statics = {
 		})
 
 		const listHistory = await this.find({ ownerId:id, ...queryString })
-			.skip((parseInt(page) - 1) * parseInt(perPage))
-			.limit(parseInt(perPage))
 			.sort({ date: "descending" })
 
 			const transformedList = listHistory.map(his => his.transform())
