@@ -118,7 +118,6 @@ exports.searchUser = async (req, res) => {
 	}
 
 	const { name, email } = req.query
-	console.log(name, email)
 	try {
 		const docs = await User.find({
 			name: { $regex: `.*${name}.*`, $options: "i" },

@@ -62,7 +62,7 @@ exports.getInfo = async (req, res, next) => {
 		req.body.info = imageInfo
 		next()
 	} catch (errors) {
-		console.log(errors)
+		resReturn.failure(req, res, 500, errors)
 	}
 }
 
@@ -86,7 +86,7 @@ exports.getFindings = async (req, res, next) => {
 		req.body.findings = imageFindings
 		next()
 	} catch (errors) {
-		console.log(errors)
+		resReturn.failure(req, res, 500,errors)
 	}
 }
 // module.exports = oAuth

@@ -94,7 +94,6 @@ describe("Authentication", () => {
 				.set("authorization", `Bearer ${accessToken}`)
 				.expect(200)
 
-				console.log(res.body)
 			expect(res.body.error).toBe(false)
 			expect(mongoose.Types.ObjectId.isValid(res.body.response.uid)).toBe(true)
 			expect(Object.keys(res.body.response).length).toBe(5)

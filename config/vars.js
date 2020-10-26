@@ -1,5 +1,4 @@
 const path = require("path")
-console.log(process.env.NODE_ENV)
 if (process.env.NODE_ENV.trim() !== "production") {
 	if (process.env.NODE_ENV.trim() === "test") {
 		require("dotenv").config({
