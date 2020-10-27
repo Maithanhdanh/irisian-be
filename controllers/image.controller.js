@@ -88,7 +88,7 @@ exports.importInfo = async (req, res) => {
 		}
 
 		const predictedResult = await PredictedResult.get(imageId)
-		predictedResult.updateResult({info})
+		predictedResult.updateResult({ info })
 		await PredictedResult.update(imageId, { result: predictedResult.result })
 		await User.update(ownerId, {})
 
@@ -127,7 +127,7 @@ exports.importFindings = async (req, res) => {
 		}
 
 		const predictedResult = await PredictedResult.get(imageId)
-		predictedResult.updateResult({findings})
+		predictedResult.updateResult({ findings })
 		await PredictedResult.update(imageId, { result: predictedResult.result })
 		await User.update(ownerId, {})
 
@@ -176,7 +176,7 @@ exports.getList = async (req, res) => {
 	}
 
 	try {
-		const {page, perPage} = req.query
+		const { page, perPage } = req.query
 		const { userId: ownerId } = req.body
 
 		const existUser = await User.get(ownerId)
@@ -185,13 +185,13 @@ exports.getList = async (req, res) => {
 			return
 		}
 
-		const doc = await PredictedResult.list({ id:ownerId, ...req.query })
-		const paginatedDoc = doc.slice((page-1)*perPage, page*perPage)
+		const doc = await PredictedResult.list({ id: ownerId, ...req.query })
+		const paginatedDoc = doc.slice((page - 1) * perPage, page * perPage)
 
 		resReturn.success(req, res, 200, {
 			nextPage: parseInt(page) + 1,
-			totalPages:Math.ceil(doc.length/parseInt(perPage)),
-			images:paginatedDoc
+			totalPages: Math.ceil(doc.length / parseInt(perPage)),
+			images: paginatedDoc,
 		})
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)

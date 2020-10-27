@@ -9,18 +9,23 @@ const cookieParser = require("cookie-parser")
 const rfs = require("rotating-file-stream")
 const ENV_VAR = require("./vars")
 
+// <!-- stream cycle of API log file -->
 const accessLogStream = rfs.createStream("access.log", {
-	interval: "30d", // rotate daily
+	interval: "30d", // rotate monthly
 	path: path.join(__dirname, "../"),
 })
 
-
-
+// <!-- middleware -->
 app.use(cors({ origin: true, credentials: true }))
 app.use(express.urlencoded())
 app.use(express.json())
 app.use(cookieParser())
 
+// <!-- public directory -->
+app.use(express.static("coverage"))
+app.use(express.static("public/img"))
+
+// <!-- format of API log based on environment -->
 if (ENV_VAR.NODE_ENV !== "test") {
 	if (ENV_VAR.NODE_ENV === "production") {
 		app.use(morgan("combined", { stream: accessLogStream }))
@@ -29,6 +34,7 @@ if (ENV_VAR.NODE_ENV !== "test") {
 	}
 }
 
+// <!-- server session -->
 app.use(
 	session({
 		secret: ENV_VAR.SESSION_SECRET,
@@ -37,6 +43,7 @@ app.use(
 	})
 )
 
+// <!-- base router -->
 app.use("/", router)
 
 const server = require("http").Server(app)

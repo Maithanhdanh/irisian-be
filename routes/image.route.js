@@ -56,9 +56,7 @@ router
 	.route("/get/:imageId")
 	.get(oAuth, validate.getImage(), controller.getImage)
 
-router
-	.route("/getList")
-	.get(oAuth, validate.getList(), controller.getList)
+router.route("/getList").get(oAuth, validate.getList(), controller.getList)
 
 router.route("/status").get((req, res) => res.json("OK"))
 module.exports = router

@@ -1,6 +1,7 @@
 const axios = require("axios")
 const ENV_VAR = require("./vars")
 
+// <!-- Initial axios request to MACHINE LEARNING server -->
 const axiosAuth = axios.create({
 	baseURL: ENV_VAR.MACHINE_LEARNING_URL,
 	headers: {
@@ -11,6 +12,7 @@ const axiosAuth = axios.create({
 	paramsSerializer: (params) => queryString.stringify(params),
 })
 
+// <!-- middleware to handle response before return data -->
 axiosAuth.interceptors.response.use(
 	(response) => {
 		if (response && response.data) {

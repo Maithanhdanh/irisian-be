@@ -1,10 +1,10 @@
 const { User, ListHistory } = require("../../models/user.model")
-const moment = require('moment')
-const ENV_VAR = require('../../config/vars')
+const moment = require("moment")
+const ENV_VAR = require("../../config/vars")
 const mongoose = require("mongoose")
 
 describe("User model", () => {
-    const currDate = moment().format(ENV_VAR.DATE_FORMAT)
+	const currDate = moment().format(ENV_VAR.DATE_FORMAT)
 	const his1 = new ListHistory({
 		path: "raw_path_1.png",
 		imageId: "image1.png",
@@ -54,25 +54,25 @@ describe("User model", () => {
 		},
 	}).history
 
-    it("check 2 history contents have different value", () => {
+	it("check 2 history contents have different value", () => {
 		expect(mongoose.Types.ObjectId.isValid(his1[currDate][0].id)).toBe(true)
 		expect(his1[currDate][0].id).not.toBe(his2[currDate][0].id)
-    })
-    
+	})
+
 	const user = new User({
 		uid: mongoose.Types.ObjectId(),
-        name: "test",
-        email: "test123123@gmail.com",
-        avatar: "avatarTest.png",
-    })
+		name: "test",
+		email: "test123123@gmail.com",
+		avatar: "avatarTest.png",
+	})
 	user.mergeHistory(his1)
 
 	it("check user history", () => {
 		expect(user._id).toBeDefined()
-        expect(user.history.length).toBe(1)
-        
-        user.mergeHistory(his2)
-        expect(user.history.length).toBe(1)
-        expect(user.history[0][currDate].length).toBe(2)
+		expect(user.history.length).toBe(1)
+
+		user.mergeHistory(his2)
+		expect(user.history.length).toBe(1)
+		expect(user.history[0][currDate].length).toBe(2)
 	})
 })

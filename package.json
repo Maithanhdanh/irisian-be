@@ -4,7 +4,7 @@
 	"private": true,
 	"scripts": {
 		"start": "set NODE_ENV=development && nodemon app.js",
-		"test": "clear && set NODE_ENV=test && jest --runInBand --testEnvironment=node --detectOpenHandles --runInBand --forceExit"
+		"test": "clear && set NODE_ENV=test && jest --coverage --runInBand --testEnvironment=node --detectOpenHandles --runInBand --forceExit"
 	},
 	"dependencies": {
 		"axios": "^0.20.0",

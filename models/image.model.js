@@ -129,29 +129,35 @@ imageSchema.statics = {
 	 * @returns {Promise<Result[]>}
 	 */
 	async list({ page = 1, perPage = 10, id, ...data }) {
-		const keys = Object.keys(data)  
+		const keys = Object.keys(data)
 		const queryString = {}
 
 		keys.map((key) => {
-			if(key === "date") {
-				return queryString["createdAt"] = {"$gte": (new Date(data[key][0])).setHours(0,0,0,0), "$lte": (new Date(data[key][1]).setHours(23,59,59,999))}
-			} else if(key === "disease"){
-				if(typeof data[key] === 'string') data[key] = [data[key]]
-				data[key].map((item)=>{
-					return queryString[`result.findings.${item}`] = {"$gte": ENV_VAR.SEARCH_IMAGE_THRESHOLD}
+			if (key === "date") {
+				return (queryString["createdAt"] = {
+					$gte: new Date(data[key][0]).setHours(0, 0, 0, 0),
+					$lte: new Date(data[key][1]).setHours(23, 59, 59, 999),
+				})
+			} else if (key === "disease") {
+				if (typeof data[key] === "string") data[key] = [data[key]]
+				data[key].map((item) => {
+					return (queryString[`result.findings.${item}`] = {
+						$gte: ENV_VAR.SEARCH_IMAGE_THRESHOLD,
+					})
 				})
 				return
 			}
-			queryString[key]=data[key]
+			queryString[key] = data[key]
 		})
 
-		const listHistory = await this.find({ ownerId:id, ...queryString })
-			.sort({ date: "descending" })
+		const listHistory = await this.find({ ownerId: id, ...queryString }).sort({
+			date: "descending",
+		})
 
-			const transformedList = listHistory.map(his => his.transform())
+		const transformedList = listHistory.map((his) => his.transform())
 		return transformedList
 	},
-	
+
 	async update(id, { ...data }) {
 		try {
 			let image

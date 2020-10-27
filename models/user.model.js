@@ -63,15 +63,16 @@ userSchema.pre("findOneAndUpdate", async function (next) {
 		if (!this.avatar || this.avatar.trim() === "") delete this.avatar
 
 		const data = {
-			userId:this._conditions.uid,name:this._update.name
+			userId: this._conditions.uid,
+			name: this._update.name,
 		}
 		const res = await axiosAuth({
 			method: ROUTE_MAP.USER.UPDATE.METHOD,
 			url: ROUTE_MAP.USER.UPDATE.PATH,
-			data:data
+			data: data,
 		})
 
-		if(res.error) resReturn.failure(req, res, 500, "Update Info failed")
+		if (res.error) resReturn.failure(req, res, 500, "Update Info failed")
 
 		return next()
 	} catch (error) {
@@ -88,7 +89,14 @@ userSchema.method({
 		const user = {}
 		const keysData = Object.keys(data)
 
-		const fields = ["uid", "name", "email", "avatar", "history", "recent_activities"]
+		const fields = [
+			"uid",
+			"name",
+			"email",
+			"avatar",
+			"history",
+			"recent_activities",
+		]
 		const allFields = [...fields, ...keysData]
 
 		allFields.forEach((field) => {

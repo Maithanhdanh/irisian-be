@@ -8,9 +8,7 @@ let addAuthUser = () => {
 }
 
 let token = () => {
-    return [
-        cookie(['refresh_token']).exists().notEmpty()
-    ]
+	return [cookie(["refresh_token"]).exists().notEmpty()]
 }
 
 let loginUser = () => {
@@ -40,7 +38,7 @@ let verifiedUserForLogin = () => {
 		body(["accessToken"]).trim().exists().isString().notEmpty(),
 		body(["expiresIn"]).trim().exists().isNumeric().notEmpty(),
 		body(["refreshToken_expiresIn"]).trim().exists().isNumeric().notEmpty(),
-		body(["refreshToken"]).exists().isString().notEmpty()
+		body(["refreshToken"]).exists().isString().notEmpty(),
 	]
 }
 
@@ -62,17 +60,17 @@ let getUser = () => {
 let updateUser = () => {
 	return [
 		body(["userId"]).exists().notEmpty(),
-        body(["name"]).trim().exists().isString(),
-        body(["avatar"]).trim().exists().isString(),
+		body(["name"]).trim().exists().isString(),
+		body(["avatar"]).trim().exists().isString(),
 	]
 }
 
 let validate = {
-	token:token,
-	loginUser:loginUser,
-	addAuthUser:addAuthUser,
-	verifiedUserForNewUser:verifiedUserForNewUser,
-	verifiedUserForLogin:verifiedUserForLogin,
+	token: token,
+	loginUser: loginUser,
+	addAuthUser: addAuthUser,
+	verifiedUserForNewUser: verifiedUserForNewUser,
+	verifiedUserForLogin: verifiedUserForLogin,
 	searchUser: searchUser,
 	getUser: getUser,
 	updateUser: updateUser,

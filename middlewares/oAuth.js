@@ -8,6 +8,7 @@ exports.oAuth = async (req, res, next) => {
 	try {
 		const authHeader = req.headers["authorization"]
 		const token = authHeader && authHeader.split(" ")[1]
+
 		if (token == null) resReturn.failure(req, res, 401, "Invalid Token")
 
 		const authenticatedUser = await axiosAuth({
@@ -17,18 +18,18 @@ exports.oAuth = async (req, res, next) => {
 				Authorization: `Basic ${token}`,
 			},
 		})
-
+		
 		if (authenticatedUser.error)
 			resReturn.failure(req, res, 401, "Verify failed")
 
 		if (req.originalUrl === "/image/upload") {
 			req.userId = authenticatedUser.response.user._id
 			req.role = authenticatedUser.response.user.role
-			await next()
+			next()
 		} else {
 			req.body.userId = authenticatedUser.response.user._id
 			req.body.role = authenticatedUser.response.user.role
-			await next()
+			next()
 		}
 	} catch (errors) {
 		resReturn.failure(req, res, 500, errors)
@@ -116,15 +117,15 @@ exports.oGetToken = async (req, res, next) => {
 			return
 		}
 
-		const {refresh_token} = req.cookies
+		const { refresh_token } = req.cookies
 		if (!refresh_token) return resReturn.failure(req, res, 401, "Verify failed")
 
 		const authenticatedUser = await axiosAuth({
 			method: ROUTE_MAP.USER.TOKEN.METHOD,
 			url: ROUTE_MAP.USER.TOKEN.PATH,
 			headers: {
-                Cookie: `refresh_token=${refresh_token}`
-            }
+				Cookie: `refresh_token=${refresh_token}`,
+			},
 		})
 
 		if (authenticatedUser.error)

@@ -1,18 +1,18 @@
 const URL_BASE = {
 	USER: "/auth",
-	IMAGE: "/image"
+	IMAGE: "/image",
 }
 const ROUTES_IMAGE = {
 	UPLOAD: "/upload",
-    INFO: "/info",
-    FINDING:"/findings"
+	INFO: "/info",
+	FINDING: "/findings",
 }
 
 const ROUTES_USER = {
 	REGISTER: "/register",
 	LOGIN: "/login",
 	UPDATE: "/update",
-	TOKEN: "/token"
+	TOKEN: "/token",
 }
 
 const ROUTE_MAP = {

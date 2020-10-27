@@ -3,14 +3,24 @@ const server = require("../../app")
 const request = require("supertest")
 const mongoose = require("mongoose")
 const queryString = require("query-string")
-const requestAuth = request("http://3.1.49.93:5000")
+
+const bodyRegis = {
+	name: "testUser123",
+	email: "test@gmail.com",
+	password: "123123123",
+}
 
 beforeAll(async () => {
-	jest.useFakeTimers()
+	try {
+		jest.useFakeTimers()
+		await User.deleteMany({ email: "test@gmail.com" })
+	} catch (err) {
+		console.log(err)
+	}
 })
 
 afterAll(async () => {
-	await User.deleteMany({email: "test"})
+	// await User.deleteMany({ email: "test@gmail.com" })
 	server.close()
 })
 
@@ -29,32 +39,49 @@ describe("Authentication", () => {
 		})
 	})
 
-	describe("/add ", () => {
+	describe("/add and /login", () => {
 		it("should success", async () => {
-			let bodyRegis = {
-				name: "testUser123",
-				email: "test@gmail.com",
-				password: "123123123",
-			}
 			await request(server).post("/user/add").send(bodyRegis).expect(200)
-			
+
 			let bodyLogin = {
-				email: "test@gmail.com",
-				password: "123123123",
+				email: bodyRegis.email,
+				password: bodyRegis.password,
 			}
-			const res = await requestAuth.post("/auth/login").send(bodyLogin)
-			return accessToken = res.body.response.accessToken
+			const res = await request(server)
+				.post("/user/login")
+				.send(bodyLogin)
+				.expect(200)
+
+			expect(res.body.error).toBe(false)
+			expect(Object.keys(res.body.response.user).length).toBe(4)
+			expect(mongoose.Types.ObjectId.isValid(res.body.response.user.uid)).toBe(
+				true
+			)
+			expect(res.body.response.user.name).toBe(bodyRegis.name)
+			expect(res.body.response.user.email).toBe(bodyRegis.email)
+			expect(res.body.response.user.history.length).toBe(0)
+			expect(res.body.response).toHaveProperty("refreshToken_expiresIn")
+			expect(res.body.response).toHaveProperty("expiresIn")
+			expect(res.body.response).toHaveProperty("accessToken")
+			expect(res.body.response).toHaveProperty("role")
+			expect(res.body.response.role).toBe("GUEST")
+			expect(Object.keys(res.body.response).length).toBe(5)
+			expect(res.headers["set-cookie"].length).not.toBe(0)
+
+			refreshToken = res.headers["set-cookie"][0].split(";")[0].split("=")[1]
+			expect(refreshToken).not.toBeNull()
+			expect(refreshToken).not.toBeUndefined()
 		})
 	})
 
 	describe("/search ", () => {
-		beforeEach(async () => {
+		beforeAll(async () => {
 			let bodyLogin = {
-				email: "test@gmail.com",
-				password: "123123123",
+				email: bodyRegis.email,
+				password: bodyRegis.password,
 			}
-			const res = await requestAuth.post("/auth/login").send(bodyLogin)
-			return accessToken = res.body.response.accessToken
+			const res = await request(server).post("/user/login").send(bodyLogin)
+			return (accessToken = res.body.response.accessToken)
 		})
 		it("should success", async () => {
 			let body = {
@@ -72,7 +99,7 @@ describe("Authentication", () => {
 				true
 			)
 
-			return uid = res.body.response[0].uid
+			return (uid = res.body.response[0].uid)
 		})
 		it("should fail => missing token", async () => {
 			let body = {
@@ -81,13 +108,22 @@ describe("Authentication", () => {
 			}
 			let query = queryString.stringify(body)
 
-			const res = await request(server)
+			await request(server)
 				.get(`/user/search?${query}`)
-				.set("authorization", `Bearer `).expect(401)
+				.set("authorization", `Bearer `)
+				.expect(401)
 		})
 	})
 
 	describe("/get/:id user by id", () => {
+		beforeAll(async () => {
+			let bodyLogin = {
+				email: bodyRegis.email,
+				password: bodyRegis.password,
+			}
+			const res = await request(server).post("/user/login").send(bodyLogin)
+			return (accessToken = res.body.response.accessToken)
+		})
 		it("should success", async () => {
 			const res = await request(server)
 				.get(`/user/get/${uid}`)
@@ -95,12 +131,15 @@ describe("Authentication", () => {
 				.expect(200)
 
 			expect(res.body.error).toBe(false)
-			expect(mongoose.Types.ObjectId.isValid(res.body.response.uid)).toBe(true)
-			expect(Object.keys(res.body.response).length).toBe(5)
+			expect(mongoose.Types.ObjectId.isValid(res.body.response.user.uid)).toBe(
+				true
+			)
+			expect(res.body.response).toHaveProperty("user")
+			expect(Object.keys(res.body.response.user).length).toBe(4)
 		})
-		
+
 		it("should fail => missing token", async () => {
-			const res = await request(server)
+			await request(server)
 				.get(`/user/get/${uid}`)
 				.set("authorization", `Bearer `)
 				.expect(401)
@@ -114,41 +153,125 @@ describe("Authentication", () => {
 		})
 	})
 
-	describe("/update", () => {
-		beforeEach(async () => {
+	describe("/token", () => {
+		beforeAll(async () => {
 			let bodyLogin = {
-				email: "test@gmail.com",
-				password: "123123123",
+				email: bodyRegis.email,
+				password: bodyRegis.password,
 			}
-			const res = await requestAuth.post("/auth/login").send(bodyLogin)
-			return accessToken = res.body.response.accessToken
+			const res = await request(server).post("/user/login").send(bodyLogin)
+			refreshToken = res.headers["set-cookie"][0].split(";")[0].split("=")[1]
+
+			return refreshToken
 		})
+
 		it("should success", async () => {
-			let body ={
+			const res = await request(server)
+				.get("/user/token")
+				.set("Cookie", `refresh_token=${refreshToken}`)
+				.expect(200)
+
+			expect(res.body.error).toBe(false)
+			expect(Object.keys(res.body.response.user).length).toBe(4)
+			expect(mongoose.Types.ObjectId.isValid(res.body.response.user.uid)).toBe(
+				true
+			)
+			expect(res.body.response.user.name).toBe(bodyRegis.name)
+			expect(res.body.response.user.email).toBe(bodyRegis.email)
+			expect(res.body.response.user.history.length).toBe(0)
+			expect(res.body.response).toHaveProperty("expiresIn")
+			expect(res.body.response).toHaveProperty("accessToken")
+			expect(res.body.response).toHaveProperty("role")
+			expect(res.body.response.role).toBe("GUEST")
+			expect(Object.keys(res.body.response).length).toBe(4)
+		})
+
+		it("should fail => missing token", async () => {
+			await request(server)
+				.get("/user/token")
+				.set("Cookie", "refresh_token=")
+				.expect(500)
+		})
+	})
+
+	describe("/update", () => {
+		beforeAll(async () => {
+			let bodyLogin = {
+				email: bodyRegis.email,
+				password: bodyRegis.password,
+			}
+			const res = await request(server).post("/user/login").send(bodyLogin)
+			return (accessToken = res.body.response.accessToken)
+		})
+
+		afterAll(async () => {
+			let body = {
+				name: bodyRegis.name,
+			}
+			await request(server)
+				.post("/user/update")
+				.set("authorization", `Bearer ${accessToken}`)
+				.send(body)
+				.expect(200)
+		})
+
+		it("should success", async () => {
+			let body = {
 				name: "Dantis",
-				avatar: "dantis.png"
+				avatar: "dantis.png",
 			}
 			const res = await request(server)
-				.post('/user/update')
+				.post("/user/update")
 				.set("authorization", `Bearer ${accessToken}`)
 				.send(body)
 				.expect(200)
 				
-			expect(res.body.error).toBe(false)
-			expect(res.body.response.name).toBe(body.name)
-			expect(res.body.response.avatar).toBe(body.avatar)
+			setTimeout(async () => {
+				expect(res.body.error).toBe(false)
+				expect(res.body.response.user.name).toBe(body.name)
+			}, 2000)
 		})
 
 		it("should fail => missing token", async () => {
-			let body ={
+			let body = {
 				name: "Dantis",
-				avatar: "dantis.png"
+				avatar: "dantis.png",
 			}
 			res = await request(server)
-				.post('/user/update')
+				.post("/user/update")
 				.set("authorization", `Bearer `)
 				.send(body)
 				.expect(401)
+		})
+	})
+
+	describe("/logout", () => {
+		beforeEach(async () => {
+			let bodyLogin = {
+				email: bodyRegis.email,
+				password: bodyRegis.password,
+			}
+			const res = await request(server).post("/user/login").send(bodyLogin)
+			refreshToken = res.headers["set-cookie"][0].split(";")[0].split("=")[1]
+
+			return refreshToken
+		})
+
+		it("should success", async () => {
+			const res = await request(server)
+				.get("/user/logout")
+				.set("Cookie", `refresh_token=${refreshToken}`)
+				.expect(200)
+
+				expect(res.body.error).toBe(false)
+				expect(res.body.response).toBe("Removed Token")
+		})
+
+		it("should fail => missing token", async () => {
+			await request(server)
+				.get("/user/logout")
+				.set("Cookie", `refresh_token=`)
+				.expect(500)
 		})
 	})
 })

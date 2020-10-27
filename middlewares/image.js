@@ -82,11 +82,12 @@ exports.getFindings = async (req, res, next) => {
 			url: ROUTE_MAP.IMAGE.FINDING.PATH + `/${imageId}`,
 		})
 
-		if (imageFindings.error) resReturn.failure(req, res, 500, "getting Info failed")
+		if (imageFindings.error)
+			resReturn.failure(req, res, 500, "getting Info failed")
 		req.body.findings = imageFindings
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500,errors)
+		resReturn.failure(req, res, 500, errors)
 	}
 }
 // module.exports = oAuth
