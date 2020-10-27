@@ -1,4 +1,6 @@
 const path = require("path")
+
+// <!-- Load environment variables based on running environment -->
 if (process.env.NODE_ENV.trim() !== "production") {
 	if (process.env.NODE_ENV.trim() === "test") {
 		require("dotenv").config({
@@ -11,6 +13,7 @@ if (process.env.NODE_ENV.trim() !== "production") {
 	}
 }
 
+// <!-- Mapping variables -->
 module.exports = {
 	NODE_ENV: process.env.NODE_ENV,
 	PORT: process.env.PORT,

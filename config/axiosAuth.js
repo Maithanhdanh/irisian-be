@@ -1,6 +1,7 @@
 const axios = require("axios")
 const ENV_VAR = require("./vars")
 
+// <!-- Initial axios request to AUTHENTICATION server -->
 const axiosAuth = axios.create({
 	baseURL: ENV_VAR.AUTHENTICATE_URL,
 	headers: {
@@ -13,9 +14,9 @@ const axiosAuth = axios.create({
 	paramsSerializer: (params) => queryString.stringify(params),
 })
 
+// <!-- middleware to handle response before return data -->
 axiosAuth.interceptors.response.use(
 	(response) => {
-
 		if (response && response.data) {
 			return response.data
 		}

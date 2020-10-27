@@ -14,7 +14,7 @@ router
 	)
 
 router.route("/token").get(validate.token(), oGetToken, controller.getToken)
-router.route("/logout").get(validate.token(),controller.RemoveToken)
+router.route("/logout").get(validate.token(), controller.RemoveToken)
 router
 	.route("/login")
 	.post(

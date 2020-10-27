@@ -21,18 +21,18 @@ exports.addUser = async (req, res) => {
 		return
 	}
 
-	const {
-		_id: uid,
-		role,
-		email,
-		name,
-		accessToken,
-		expiresIn,
-		refreshToken_expiresIn,
-		refresh_token,
-	} = req.body
-
 	try {
+		const {
+			_id: uid,
+			role,
+			email,
+			name,
+			accessToken,
+			expiresIn,
+			refreshToken_expiresIn,
+			refresh_token,
+		} = req.body
+
 		const existUser = await User.getUserDetail(email)
 		if (existUser != null) {
 			resReturn.failure(req, res, 406, "Existed User")
@@ -67,21 +67,21 @@ exports.loginUser = async (req, res) => {
 		return
 	}
 
-	const {
-		_id: uid,
-		role,
-		accessToken,
-		expiresIn,
-		refreshToken_expiresIn,
-		refreshToken,
-	} = req.body
-
-	res.cookie("refresh_token", refreshToken, {
-		httpOnly: true,
-		maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
-	})
-
 	try {
+		const {
+			_id: uid,
+			role,
+			accessToken,
+			expiresIn,
+			refreshToken_expiresIn,
+			refreshToken,
+		} = req.body
+
+		res.cookie("refresh_token", refreshToken, {
+			httpOnly: true,
+			maxAge: ENV_VAR.REFRESH_TOKEN_COOKIE_EXPIRATION,
+		})
+
 		const doc = await User.get(uid)
 		if (doc == null) return resReturn.failure(req, res, 400, "User not found")
 		const transformedDoc = doc.transform({
@@ -146,13 +146,14 @@ exports.getUser = async (req, res) => {
 	}
 
 	const userID = req.params.id
-
+	
 	try {
 		const doc = await User.get(userID)
 		if (doc === null) {
-			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			resReturn.failure(req, res, 500, "Inexistent User" )
 			return
 		}
+
 		const transformedDoc = doc.transform()
 		resReturn.success(req, res, 200, transformedDoc)
 	} catch (errors) {

@@ -64,28 +64,28 @@ describe("Image model", () => {
 		})
 
 		it("update info", () => {
-            image.updateResult({info})
-            
-            expect(typeof image.result).toBe('object')
-            expect(image.result).toHaveProperty('info')
-            expect(Object.keys(image.result).length).toBe(1)
-            expect(image.result.info).toBe(info)
+			image.updateResult({ info })
 
-            image.updateResult({info:info2})
-            
-            expect(typeof image.result).toBe('object')
-            expect(image.result).toHaveProperty('info')
-            expect(Object.keys(image.result).length).toBe(1)
-            expect(image.result.info).toBe(info2)
+			expect(typeof image.result).toBe("object")
+			expect(image.result).toHaveProperty("info")
+			expect(Object.keys(image.result).length).toBe(1)
+			expect(image.result.info).toBe(info)
+
+			image.updateResult({ info: info2 })
+
+			expect(typeof image.result).toBe("object")
+			expect(image.result).toHaveProperty("info")
+			expect(Object.keys(image.result).length).toBe(1)
+			expect(image.result.info).toBe(info2)
 		})
 
 		it("update findings", () => {
-            image.updateResult({findings})
-            
-            expect(typeof image.result).toBe('object')
-            expect(image.result).toHaveProperty('findings')
-            expect(Object.keys(image.result).length).toBe(2)
-            expect(image.result.findings).toBe(findings)
+			image.updateResult({ findings })
+
+			expect(typeof image.result).toBe("object")
+			expect(image.result).toHaveProperty("findings")
+			expect(Object.keys(image.result).length).toBe(2)
+			expect(image.result.findings).toBe(findings)
 		})
 	})
 })
