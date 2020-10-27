@@ -150,7 +150,7 @@ userSchema.statics = {
 
 			return userModel
 		} catch (error) {
-			throw error
+			return error
 		}
 	},
 	/**
@@ -166,15 +166,15 @@ userSchema.statics = {
 			if (mongoose.Types.ObjectId.isValid(id)) {
 				user = await this.findOne({ uid: id }).exec()
 			}
-			if (user) {
+			if (!user) {
 				// const listHistory = await PredictedResult.list({id:user.uid})
 				// user.recent_activities = listHistory
-				return user
+				return null
 			}
 
-			throw new Error({ message: "User does not exist" })
+			return user
 		} catch (error) {
-			throw error
+			return error
 		}
 	},
 
@@ -194,9 +194,9 @@ userSchema.statics = {
 				return user
 			}
 
-			throw new Error({ message: "User does not exist" })
+			return null
 		} catch (error) {
-			throw error
+			return error
 		}
 	},
 }
