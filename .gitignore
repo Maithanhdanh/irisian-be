@@ -62,3 +62,4 @@ ecosystem.config.js
 .next
 
 *.http
+ecosystem.config.*
