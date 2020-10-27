@@ -98,8 +98,6 @@ describe("Authentication", () => {
 			expect(mongoose.Types.ObjectId.isValid(res.body.response[0].uid)).toBe(
 				true
 			)
-
-			return (uid = res.body.response[0].uid)
 		})
 		it("should fail => missing token", async () => {
 			let body = {
@@ -122,8 +120,10 @@ describe("Authentication", () => {
 				password: bodyRegis.password,
 			}
 			const res = await request(server).post("/user/login").send(bodyLogin)
-			return (accessToken = res.body.response.accessToken)
+			return uid = res.body.response.user.uid
 		})
+		
+
 		it("should success", async () => {
 			const res = await request(server)
 				.get(`/user/get/${uid}`)
@@ -137,7 +137,6 @@ describe("Authentication", () => {
 			expect(res.body.response).toHaveProperty("user")
 			expect(Object.keys(res.body.response.user).length).toBe(4)
 		})
-
 		it("should fail => missing token", async () => {
 			await request(server)
 				.get(`/user/get/${uid}`)
@@ -147,7 +146,7 @@ describe("Authentication", () => {
 
 		it("should fail => missing uid", async () => {
 			await request(server)
-				.get(`/user/get/`)
+				.get(`/user/get/ `)
 				.set("authorization", `Bearer ${accessToken}`)
 				.expect(404)
 		})
@@ -225,11 +224,11 @@ describe("Authentication", () => {
 				.set("authorization", `Bearer ${accessToken}`)
 				.send(body)
 				.expect(200)
-				
+
 			setTimeout(async () => {
 				expect(res.body.error).toBe(false)
 				expect(res.body.response.user.name).toBe(body.name)
-			}, 2000)
+			}, 1000)
 		})
 
 		it("should fail => missing token", async () => {
@@ -263,8 +262,8 @@ describe("Authentication", () => {
 				.set("Cookie", `refresh_token=${refreshToken}`)
 				.expect(200)
 
-				expect(res.body.error).toBe(false)
-				expect(res.body.response).toBe("Removed Token")
+			expect(res.body.error).toBe(false)
+			expect(res.body.response).toBe("Removed Token")
 		})
 
 		it("should fail => missing token", async () => {
