@@ -42,44 +42,6 @@ const userSchema = new Schema(
 	}
 )
 
-userSchema.pre("save", async function save(next) {
-	try {
-		return next()
-	} catch (error) {
-		return next(error)
-	}
-})
-
-/**
- * Add your
- * - pre-save hooks
- * - validations
- * - virtual
- */
-userSchema.pre("findOneAndUpdate", async function (next) {
-	try {
-		this.updateAt = new Date()
-		if (!this.name || this.name.trim() === "") delete this.name
-		if (!this.avatar || this.avatar.trim() === "") delete this.avatar
-
-		const data = {
-			userId: this._conditions.uid,
-			name: this._update.name,
-		}
-		const res = await axiosAuth({
-			method: ROUTE_MAP.USER.UPDATE.METHOD,
-			url: ROUTE_MAP.USER.UPDATE.PATH,
-			data: data,
-		})
-
-		if (res.error) resReturn.failure(req, res, 500, "Update Info failed")
-
-		return next()
-	} catch (error) {
-		return next(error)
-	}
-})
-
 /**
  * Methods
  */
@@ -191,6 +153,18 @@ userSchema.statics = {
 					user[key] = data[key]
 				})
 				user.save()
+
+				const body = {
+					userId: user.uid,
+					name: user.name,
+				}
+				const res = await axiosAuth({
+					method: ROUTE_MAP.USER.UPDATE.METHOD,
+					url: ROUTE_MAP.USER.UPDATE.PATH,
+					data: body,
+				})
+		
+				if (res.error) return null
 				return user
 			}
 

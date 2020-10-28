@@ -146,11 +146,11 @@ exports.getUser = async (req, res) => {
 	}
 
 	const userID = req.params.id
-	
+
 	try {
 		const doc = await User.get(userID)
 		if (doc === null) {
-			resReturn.failure(req, res, 500, "Inexistent User" )
+			resReturn.failure(req, res, 500, "Inexistent User")
 			return
 		}
 
@@ -179,13 +179,12 @@ exports.updateUser = async (req, res) => {
 	const { userId, name, avatar } = req.body
 
 	try {
-		const doc = await User.findOneAndUpdate(
-			{ uid: userId },
+		const doc = await User.update(
+			userId ,
 			{
 				name: name,
 				avatar: avatar,
-			},
-			{ useFindAndModify: false }
+			}
 		)
 		if (!doc) {
 			resReturn.failure(req, res, 500, { message: "Inexistent User" })
