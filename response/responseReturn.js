@@ -2,6 +2,7 @@ const logger = require("../config/logger")
 
 class responseReturn {}
 
+//<!-- Format of success response-->
 responseReturn.prototype.success = function (req, res, statusCode, message) {
 	logger.info(
 		`server response success status: ${statusCode}, URL: ${req.originalUrl} (development)`
@@ -11,6 +12,7 @@ responseReturn.prototype.success = function (req, res, statusCode, message) {
 	return res
 }
 
+//<!-- Format of error response-->
 responseReturn.prototype.failure = function (req, res, statusCode, message) {
 	logger.info(
 		`server response failed status: ${statusCode}, URL: ${req.originalUrl} (development)`

@@ -11,6 +11,8 @@ const { validate } = require("../validation/image.validation")
 const router = express.Router()
 const multer = require("multer")
 const mongoose = require("mongoose")
+
+//<!-- Setup to catch upload image event -->
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
 		cb(null, "uploads/")
@@ -19,7 +21,6 @@ const storage = multer.diskStorage({
 		cb(null, mongoose.Types.ObjectId() + ".jpg") //Appending .jpg
 	},
 })
-
 const upload = multer({ storage: storage })
 
 router

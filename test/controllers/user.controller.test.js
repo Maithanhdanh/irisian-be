@@ -20,7 +20,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-	// await User.deleteMany({ email: "test@gmail.com" })
+	await User.deleteMany({ email: "test@gmail.com" })
 	server.close()
 })
 
@@ -41,12 +41,15 @@ describe("Authentication", () => {
 
 	describe("/add and /login", () => {
 		it("should success", async () => {
+			//<!-- Setup -->
 			await request(server).post("/user/add").send(bodyRegis).expect(200)
 
 			let bodyLogin = {
 				email: bodyRegis.email,
 				password: bodyRegis.password,
 			}
+
+			//<!-- Run test -->
 			const res = await request(server)
 				.post("/user/login")
 				.send(bodyLogin)
@@ -84,15 +87,17 @@ describe("Authentication", () => {
 			return (accessToken = res.body.response.accessToken)
 		})
 		it("should success", async () => {
+			//<!-- Setup -->
 			let body = {
 				email: "",
 				name: "testUser",
 			}
 			let query = queryString.stringify(body)
 
+			//<!-- Run test -->
 			const res = await request(server)
 				.get(`/user/search?${query}`)
-				.set("authorization", `Bearer ${accessToken}`)
+				.set("authorization", `Bearer ${accessToken}`).expect(200)
 
 			expect(res.body.error).toBe(false)
 			expect(mongoose.Types.ObjectId.isValid(res.body.response[0].uid)).toBe(
@@ -100,16 +105,33 @@ describe("Authentication", () => {
 			)
 		})
 		it("should fail => missing token", async () => {
+			//<!-- Setup -->
 			let body = {
 				email: "",
 				name: "testUser",
 			}
 			let query = queryString.stringify(body)
 
+			//<!-- Run test -->
 			await request(server)
 				.get(`/user/search?${query}`)
 				.set("authorization", `Bearer `)
 				.expect(401)
+		})
+
+		it("should fail => wrong token", async () => {
+			//<!-- Setup -->
+			let body = {
+				email: "",
+				name: "testUser",
+			}
+			let query = queryString.stringify(body)
+
+			//<!-- Run test -->
+			await request(server)
+				.get(`/user/search?${query}`)
+				.set("authorization", `Bearer 123123123asdasda`)
+				.expect(403)
 		})
 	})
 
@@ -189,7 +211,7 @@ describe("Authentication", () => {
 			await request(server)
 				.get("/user/token")
 				.set("Cookie", "refresh_token=")
-				.expect(500)
+				.expect(400)
 		})
 	})
 
@@ -270,7 +292,7 @@ describe("Authentication", () => {
 			await request(server)
 				.get("/user/logout")
 				.set("Cookie", `refresh_token=`)
-				.expect(500)
+				.expect(401)
 		})
 	})
 })

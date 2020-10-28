@@ -1,3 +1,4 @@
+//<!-- COMMUNICATE WITH MACHINE LEARNING SERVER -->
 const { validationResult } = require("express-validator")
 const axiosML = require("../config/axiosML")
 const ROUTE_MAP = require("../config/urlBase")
@@ -5,15 +6,25 @@ const responseReturn = require("../response/responseReturn")
 const FormData = require("form-data")
 const fs = require("fs")
 
+// <!-- Handle catch uploaded file -->
+/**
+ * @param {File} file - property file of request.
+ * @returns {Promise<File, Error>}
+ */
 exports.verifyImage = (req, res, next) => {
 	let resReturn = new responseReturn()
 	const file = req.file
 
-	if (!file) resReturn.failure(req, res, 422, "Image not found")
+	if (!file) return next(resReturn.failure(req, res, 422, "Image not found"))
 
 	next()
 }
 
+// <!-- Upload file to machine learning server -->
+/**
+ * @param {File} file - property file of request.
+ * @returns {Promise<Request, Response>}
+ */
 exports.uploadImage = async (req, res, next) => {
 	let resReturn = new responseReturn()
 	try {
@@ -38,16 +49,24 @@ exports.uploadImage = async (req, res, next) => {
 		await fs.unlinkSync(file.path)
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors.message)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 
+// <!-- Get image info -->
+/**
+ * @param {ObjectId} userId - in body returned by authentication server.
+ * @param {String} imageId - in body.
+ * @returns {Promise<Request, Response>}
+ */
 exports.getInfo = async (req, res, next) => {
 	try {
 		const errors = validationResult(req)
 		let resReturn = new responseReturn()
 		if (!errors.isEmpty()) {
-			resReturn.failure(req, res, 500, errors.array())
+			resReturn.failure(req, res, 400, errors.array())
 			return
 		}
 
@@ -62,16 +81,24 @@ exports.getInfo = async (req, res, next) => {
 		req.body.info = imageInfo
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 
+// <!-- Get image findings -->
+/**
+ * @param {ObjectId} userId - in body returned by authentication server.
+ * @param {String} imageId - in body.
+ * @returns {Promise<Request, Response>}
+ */
 exports.getFindings = async (req, res, next) => {
 	try {
 		const errors = validationResult(req)
 		let resReturn = new responseReturn()
 		if (!errors.isEmpty()) {
-			resReturn.failure(req, res, 500, errors.array())
+			resReturn.failure(req, res, 400, errors.array())
 			return
 		}
 
@@ -87,7 +114,9 @@ exports.getFindings = async (req, res, next) => {
 		req.body.findings = imageFindings
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 // module.exports = oAuth

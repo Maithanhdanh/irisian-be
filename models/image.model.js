@@ -1,6 +1,5 @@
 const mongoose = require("mongoose")
 const Schema = mongoose.Schema
-const bcrypt = require("bcryptjs")
 const ENV_VAR = require("../config/vars")
 const moment = require("moment")
 
@@ -41,32 +40,10 @@ imageSchema.pre("save", async function save(next) {
 })
 
 /**
- * Add your
- * - pre-save hooks
- * - validations
- * - virtuals
- */
-imageSchema.pre("update", async function (next) {
-	try {
-		//   if (!this.isModified("password")) return next();
-
-		//   const rounds = env === "test" ? 1 : 10;
-
-		//   const hash = await bcrypt.hash(this.password, rounds);
-		//   this.password = hash;
-		this.updateAt = new Date()
-
-		return next()
-	} catch (error) {
-		return next(error)
-	}
-})
-
-/**
  * Methods
  */
-
 imageSchema.method({
+	//<!-- Transform data before return -->
 	transform() {
 		const transformed = {}
 		const fields = [
@@ -88,9 +65,14 @@ imageSchema.method({
 		return transformed
 	},
 
+	//<!-- Add info and findings from machine learning server -->
+	/**
+	 * @param {Object} result - The info or findings.
+	 */
 	updateResult(result) {
 		if (typeof result !== "object")
-			throw new Error({ message: "input result must be object" })
+			return new Error({ message: "input result must be object" })
+
 		const newResult = new ResultInfo(this.result)
 		newResult.update = result
 		this.result = newResult
@@ -101,11 +83,10 @@ imageSchema.method({
  * Statics
  */
 imageSchema.statics = {
+	//<!-- Get image by Id -->
 	/**
-	 * Get Result
-	 *
-	 * @param {ObjectId} id - The objectId of Result.
-	 * @returns {Promise<Result, APIError>}
+	 * @param {String} id - The image Id returned from machine learning server.
+	 * @returns {Promise<PredictedResult, error>}
 	 */
 	async get(id) {
 		try {
@@ -121,43 +102,54 @@ imageSchema.statics = {
 			throw error
 		}
 	},
+
+	//<!-- Get list images -->
 	/**
-	 * List Results in descending order of 'createdAt' timestamp.
-	 *
-	 * @param {number} skip - Number of Results to be skipped.
-	 * @param {number} limit - Limit number of Results to be returned.
-	 * @returns {Promise<Result[]>}
+	 * @param {String} page - Current page.
+	 * @param {String} perPage - Items each page.
+	 * @param {String} id - ownerId of images.
+	 * @param {Object} data - other filter parameters besides ownerId.
+	 * @returns {Promise<Array, error>}
 	 */
 	async list({ page = 1, perPage = 10, id, ...data }) {
-		const keys = Object.keys(data)
-		const queryString = {}
-
-		keys.map((key) => {
-			if (key === "date") {
-				return (queryString["createdAt"] = {
-					$gte: new Date(data[key][0]).setHours(0, 0, 0, 0),
-					$lte: new Date(data[key][1]).setHours(23, 59, 59, 999),
-				})
-			} else if (key === "disease") {
-				if (typeof data[key] === "string") data[key] = [data[key]]
-				data[key].map((item) => {
-					return (queryString[`result.findings.${item}`] = {
-						$gte: ENV_VAR.SEARCH_IMAGE_THRESHOLD,
+		try{
+			const keys = Object.keys(data)
+			const queryString = {}
+	
+			keys.map((key) => {
+				if (key === "date") {
+					return (queryString["createdAt"] = {
+						$gte: new Date(data[key][0]).setHours(0, 0, 0, 0),
+						$lte: new Date(data[key][1]).setHours(23, 59, 59, 999),
 					})
-				})
-				return
-			}
-			queryString[key] = data[key]
-		})
-
-		const listHistory = await this.find({ ownerId: id, ...queryString }).sort({
-			date: "descending",
-		})
-
-		const transformedList = listHistory.map((his) => his.transform())
-		return transformedList
+				} else if (key === "disease") {
+					if (typeof data[key] === "string") data[key] = [data[key]]
+					return (data[key].map((item) => {
+						(queryString[`result.findings.${item}`] = {
+							$gte: ENV_VAR.SEARCH_IMAGE_THRESHOLD,
+						})
+					}))
+				}
+				queryString[key] = data[key]
+			})
+	
+			const listHistory = await this.find({ ownerId: id, ...queryString }).sort({
+				date: "descending",
+			})
+	
+			const transformedList = listHistory.map((his) => his.transform())
+			return transformedList
+		} catch (err) {
+			return err
+		}
 	},
 
+	//<!-- Update images -->
+	/**
+	 * @param {String} id - imageId.
+	 * @param {Object} data - data needed to update.
+	 * @returns {Promise<PredictedResult, error>}
+	 */
 	async update(id, { ...data }) {
 		try {
 			let image

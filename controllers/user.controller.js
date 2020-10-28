@@ -5,13 +5,16 @@ const ENV_VAR = require("../config/vars")
 /**
  * ADD PATIENT
  *
- * @body patient_name    (String) patient's name             (required)
- * @body dob             (string) patient's date of birth    (required)
- * @body gender          (string) patient's gender           (required)
- * @body phone           (string) patient's phone            (required)
- * @body address         (string) patient's address          (optional)
+ * @body {ObjectId} uid - ObjectId from authentication server
+ * @body {String} role - from authentication server
+ * @body {String} email - request
+ * @body {String} password - request
+ * @body {String} accessToken - from authentication server
+ * @body {String} refreshToken - from authentication server
+ * @body {Number} accessToken - from authentication server
+ * @body {Number} accessToken - from authentication server
  *
- * @return 200 - 'User is added' || 500 - errors
+ * @return {Promise<User, Error>}
  **/
 exports.addUser = async (req, res) => {
 	const errors = validationResult(req)
@@ -35,7 +38,7 @@ exports.addUser = async (req, res) => {
 
 		const existUser = await User.getUserDetail(email)
 		if (existUser != null) {
-			resReturn.failure(req, res, 406, "Existed User")
+			resReturn.failure(req, res, 400, "Existed User")
 			return
 		}
 
@@ -59,11 +62,23 @@ exports.addUser = async (req, res) => {
 	}
 }
 
+/**
+ * User log in
+ *
+ * @body {ObjectId} uid - ObjectId from authentication server
+ * @body {String} role - from authentication server
+ * @body {String} accessToken - from authentication server
+ * @body {String} refreshToken - from authentication server
+ * @body {Number} accessToken - from authentication server
+ * @body {Number} accessToken - from authentication server
+ *
+ * @return  {Promise<User, Error>}
+ **/
 exports.loginUser = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 401, errors.array())
+		resReturn.failure(req, res, 400, errors.array())
 		return
 	}
 
@@ -98,16 +113,13 @@ exports.loginUser = async (req, res) => {
 }
 
 /**
- * SEARCH PATIENTS
+ * Search list users
  *
- * @query patient_name    (String) patient's name             (required)
- * @query dob             (string) patient's date of birth    (required)
- * @query gender          (string) patient's gender           (required)
- * @query phone           (string) patient's phone            (required)
- * @query address         (string) patient's address          (optional)
- * @query date_come       (string) patient's address          (optional)
+ * @query {email} email
+ * @query {name} name
+ * @body {ObjectId} userId - from authentication server
  *
- * @return 200 - list of patient || 500 - errors
+ * @return  {Promise<User, Error>}
  **/
 exports.searchUser = async (req, res) => {
 	const errors = validationResult(req)
@@ -131,11 +143,12 @@ exports.searchUser = async (req, res) => {
 }
 
 /**
- * SEARCH PATIENT BY ID
+ * Search an user by Id
  *
- * @query id    (String) patient's id    (required)
+ * @param {ObjectId} id
+ * @body {ObjectId} userId - from authentication server
  *
- * @return 200 - patient's profile || 500 - errors
+ * @return  {Promise<Array<User>, Error>}
  **/
 exports.getUser = async (req, res) => {
 	const errors = validationResult(req)
@@ -150,7 +163,7 @@ exports.getUser = async (req, res) => {
 	try {
 		const doc = await User.get(userID)
 		if (doc === null) {
-			resReturn.failure(req, res, 500, "Inexistent User")
+			resReturn.failure(req, res, 400, "Inexistent User")
 			return
 		}
 
@@ -162,11 +175,13 @@ exports.getUser = async (req, res) => {
 }
 
 /**
- * UPDATE PATIENT INFO
+ * Update user info
  *
- * @query id    (String) patient's id    (required)
+ * @body {ObjectId} userId - from authentication server
+ * @body {String} name - request
+ * @body {String} avatar - request
  *
- * @return 200 - patient's profile || 500 - errors
+ * @return  {Promise<User, Error>}
  **/
 exports.updateUser = async (req, res) => {
 	const errors = validationResult(req)
@@ -187,7 +202,7 @@ exports.updateUser = async (req, res) => {
 			}
 		)
 		if (!doc) {
-			resReturn.failure(req, res, 500, { message: "Inexistent User" })
+			resReturn.failure(req, res, 400, "Inexistent User" )
 			return
 		}
 
@@ -198,6 +213,13 @@ exports.updateUser = async (req, res) => {
 	}
 }
 
+/**
+ * Update user info
+ *
+ * @cookie {String} refresh_token
+ *
+ * @return  {Promise<User, Error>}
+ **/
 exports.getToken = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
@@ -224,11 +246,18 @@ exports.getToken = async (req, res) => {
 	}
 }
 
+/**
+ * Remove refresh token
+ *
+ * @cookie {String} refresh_token
+ *
+ * @return  {Promise<User, Nothing>}
+ **/
 exports.RemoveToken = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
 	if (!errors.isEmpty()) {
-		resReturn.failure(req, res, 500, errors.array())
+		resReturn.failure(req, res, 401, errors.array())
 		return
 	}
 

@@ -3,13 +3,18 @@ const axiosAuth = require("../config/axiosAuth")
 const ROUTE_MAP = require("../config/urlBase")
 const responseReturn = require("../response/responseReturn")
 
+// <!-- Verify token -->
+/**
+ * @param {String} accessToken - in authorization header.
+ * @returns {Promise<Request, Response>}
+ */
 exports.oAuth = async (req, res, next) => {
 	let resReturn = new responseReturn()
 	try {
 		const authHeader = req.headers["authorization"]
 		const token = authHeader && authHeader.split(" ")[1]
 
-		if (token == null) resReturn.failure(req, res, 401, "Invalid Token")
+		if (!token) return next(resReturn.failure(req, res, 401, "Invalid Token"))
 
 		const authenticatedUser = await axiosAuth({
 			method: "GET",
@@ -18,9 +23,9 @@ exports.oAuth = async (req, res, next) => {
 				Authorization: `Basic ${token}`,
 			},
 		})
-		
+
 		if (authenticatedUser.error)
-			resReturn.failure(req, res, 401, "Verify failed")
+			return next(resReturn.failure(req, res, 401, "Verify failed"))
 
 		if (req.originalUrl === "/image/upload") {
 			req.userId = authenticatedUser.response.user._id
@@ -32,17 +37,24 @@ exports.oAuth = async (req, res, next) => {
 			next()
 		}
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 
+// <!-- Get access and refresh token from authentication server -->
+/**
+ * @param {String} email - in body.
+ * @param {String} password - in body.
+ * @returns {Promise<Request, Response>}
+ */
 exports.Login = async (req, res, next) => {
 	let resReturn = new responseReturn()
 	try {
 		const errors = validationResult(req)
 		if (!errors.isEmpty()) {
-			resReturn.failure(req, res, 500, errors.array())
-			return
+			return next(resReturn.failure(req, res, 400, errors.array()))
 		}
 
 		const { email, password } = req.body
@@ -54,7 +66,7 @@ exports.Login = async (req, res, next) => {
 		})
 
 		if (authenticatedUser.error)
-			resReturn.failure(req, res, 401, "Verify failed")
+			return next(resReturn.failure(req, res, 401, "Verify failed"))
 
 		req.body = {
 			_id: authenticatedUser.response.user._id,
@@ -67,17 +79,24 @@ exports.Login = async (req, res, next) => {
 
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 
+// <!-- Register new User in authentication server-->
+/**
+ * @param {String} email - in body.
+ * @param {String} password - in body.
+ * @returns {Promise<Request, Response>}
+ */
 exports.oRegis = async (req, res, next) => {
 	let resReturn = new responseReturn()
 	try {
 		const errors = validationResult(req)
 		if (!errors.isEmpty()) {
-			resReturn.failure(req, res, 500, errors.array())
-			return
+			return next(resReturn.failure(req, res, 400, errors.array()))
 		}
 
 		const { name, email, password } = req.body
@@ -89,7 +108,7 @@ exports.oRegis = async (req, res, next) => {
 		})
 
 		if (authenticatedUser.error)
-			return resReturn.failure(req, res, 401, "Verify failed")
+			return next(resReturn.failure(req, res, 401, "Verify failed"))
 
 		req.body = {
 			_id: authenticatedUser.response.user._id,
@@ -104,21 +123,28 @@ exports.oRegis = async (req, res, next) => {
 
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
 
+// <!-- Get new access token from refresh token -->
+/**
+ * @param {String} refresh_token - in cookie.
+ * @returns {Promise<Request, Response>}
+ */
 exports.oGetToken = async (req, res, next) => {
 	let resReturn = new responseReturn()
 	try {
 		const errors = validationResult(req)
 		if (!errors.isEmpty()) {
-			resReturn.failure(req, res, 500, errors.array())
-			return
+			return next(resReturn.failure(req, res, 400, errors.array()))
 		}
 
 		const { refresh_token } = req.cookies
-		if (!refresh_token) return resReturn.failure(req, res, 401, "Verify failed")
+		if (!refresh_token)
+			return next(resReturn.failure(req, res, 401, "Verify failed"))
 
 		const authenticatedUser = await axiosAuth({
 			method: ROUTE_MAP.USER.TOKEN.METHOD,
@@ -129,7 +155,7 @@ exports.oGetToken = async (req, res, next) => {
 		})
 
 		if (authenticatedUser.error)
-			return resReturn.failure(req, res, 401, "Verify failed")
+			return next(resReturn.failure(req, res, 401, "Verify failed"))
 
 		req.body = {
 			_id: authenticatedUser.response.user._id,
@@ -142,8 +168,8 @@ exports.oGetToken = async (req, res, next) => {
 
 		next()
 	} catch (errors) {
-		resReturn.failure(req, res, 500, errors)
+		return next(
+			resReturn.failure(req, res, errors.response.status, errors.message)
+		)
 	}
 }
-
-// module.exports = oAuth

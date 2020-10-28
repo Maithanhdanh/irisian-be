@@ -1,9 +1,14 @@
 const { param, body, query } = require("express-validator")
 
+//<!-- verify token -->
 let authInfo = () => {
-	return [body(["userId"]).exists().isString().notEmpty()]
+	return [
+		body(["userId"]).exists().isString().notEmpty(),
+		param(["imageId"]).exists().isString().notEmpty(),
+	]
 }
 
+//<!-- Get an image -->
 let getImage = () => {
 	return [
 		body(["userId"]).exists().isString().notEmpty(),
@@ -11,6 +16,7 @@ let getImage = () => {
 	]
 }
 
+//<!-- Get list images -->
 let getList = () => {
 	return [
 		body(["userId"]).exists().isString().notEmpty(),
@@ -19,6 +25,7 @@ let getList = () => {
 	]
 }
 
+//<!-- Get image info -->
 let infoImage = () => {
 	return [
 		param(["imageId"]).exists().isString().notEmpty(),
@@ -27,6 +34,7 @@ let infoImage = () => {
 	]
 }
 
+//<!-- Get image findings -->
 let findingsImage = () => {
 	return [
 		param(["imageId"]).exists().isString().notEmpty(),

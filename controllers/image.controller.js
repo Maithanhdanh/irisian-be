@@ -4,15 +4,11 @@ const { User, ListHistory } = require("../models/user.model")
 const { validationResult } = require("express-validator")
 
 /**
- * ADD User
+ * Import new image
  *
- * @body User_name    (String) User's name             (required)
- * @body dob             (string) User's date of birth    (required)
- * @body gender          (string) User's gender           (required)
- * @body phone           (string) User's phone            (required)
- * @body address         (string) User's address          (optional)
+ * @property {String} ownerId - property userId of request
  *
- * @return 200 - 'User is added' || 500 - errors
+ * @return  {Promise<PredictedResult, Error>}
  **/
 exports.importImage = async (req, res) => {
 	let resReturn = new responseReturn()
@@ -20,7 +16,6 @@ exports.importImage = async (req, res) => {
 		return resReturn.failure(req, res, 422, "no User detected")
 	try {
 		const ownerId = req.userId
-		const role = req.role
 		const {
 			path,
 			image: imageId,
@@ -60,16 +55,13 @@ exports.importImage = async (req, res) => {
 }
 
 /**
- * SEARCH UserS
- * p
- * @query User_name    (String) User's name             (required)
- * @query dob             (string) User's date of birth    (required)
- * @query gender          (string) User's gender           (required)
- * @query phone           (string) User's phone            (required)
- * @query address         (string) User's address          (optional)
- * @query date_come       (string) User's address          (optional)
+ * Import info image
  *
- * @return 200 - list of User || 500 - errors
+ * @param {String} imageId
+ * @body {ObjectId} userId
+ * @body {Object} info - returned from machine learning server
+ *
+ * @return  {Promise<ResultInfo, Error>}
  **/
 exports.importInfo = async (req, res) => {
 	const errors = validationResult(req)
@@ -102,11 +94,13 @@ exports.importInfo = async (req, res) => {
 }
 
 /**
- * SEARCH User BY ID
+ * Import findings image
  *
- * @query id    (String) User's id    (required)
+ * @param {String} imageId
+ * @body {ObjectId} userId
+ * @body {Object} findings - returned from machine learning server
  *
- * @return 200 - User's profile || 500 - errors
+ * @return  {Promise<ResultInfo, Error>}
  **/
 exports.importFindings = async (req, res) => {
 	const errors = validationResult(req)
@@ -140,6 +134,14 @@ exports.importFindings = async (req, res) => {
 	}
 }
 
+/**
+ * Import findings image
+ *
+ * @param {String} imageId
+ * @body {ObjectId} userId
+ *
+ * @return  {Promise<PredictedResult, Error>}
+ **/
 exports.getImage = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()
@@ -167,6 +169,15 @@ exports.getImage = async (req, res) => {
 	}
 }
 
+/**
+ * Import findings image
+ *
+ * @quey {String} page - current page
+ * @quey {String} perPage - items per page
+ * @body {ObjectId} userId
+ *
+ * @return  {Promise<Array<PredictedResult>, Error>}
+ **/
 exports.getList = async (req, res) => {
 	const errors = validationResult(req)
 	let resReturn = new responseReturn()

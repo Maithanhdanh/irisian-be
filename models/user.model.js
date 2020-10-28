@@ -2,7 +2,6 @@ const mongoose = require("mongoose")
 const Schema = mongoose.Schema
 const ENV_VAR = require("../config/vars")
 const moment = require("moment")
-const { PredictedResult, ResultInfo } = require("./image.model")
 const axiosAuth = require("../config/axiosAuth")
 const ROUTE_MAP = require("../config/urlBase")
 
@@ -46,6 +45,11 @@ const userSchema = new Schema(
  * Methods
  */
 userSchema.method({
+	//<!-- transform data before return -->
+	//<!-- Get user -->
+	/**
+	 * @param {Object} data - Other data needed to return.
+	 */
 	transform(data = {}) {
 		const transformed = {}
 		const user = {}
@@ -73,6 +77,7 @@ userSchema.method({
 		return transformed
 	},
 
+	//<!-- transform data for ADMIN call -->
 	adminRetrieve() {
 		const transformed = {}
 		const fields = ["uid", "id", "name", "email", "avatar"]
@@ -84,6 +89,10 @@ userSchema.method({
 		return transformed
 	},
 
+	//<!-- update user history -->
+	/**
+	 * @param {Object} his - The history of user.
+	 */
 	mergeHistory(his) {
 		const date = Object.keys(his)
 		const listDate = getListDateFromHistory(this.history)
@@ -102,6 +111,11 @@ const getListDateFromHistory = (history) => {
  * Statics
  */
 userSchema.statics = {
+	//<!-- Get user by email -->
+	/**
+	 * @param {String} email - The email of user.
+	 * @returns {Promise<User, error>}
+	 */
 	async getUserDetail(email) {
 		try {
 			//<!-- Get User based on email -->
@@ -115,11 +129,11 @@ userSchema.statics = {
 			return error
 		}
 	},
+
+	//<!-- Get user -->
 	/**
-	 * Get user
-	 *
 	 * @param {ObjectId} id - The objectId of user.
-	 * @returns {Promise<User, APIError>}
+	 * @returns {Promise<User, error>}
 	 */
 	async get(id) {
 		try {
@@ -129,8 +143,6 @@ userSchema.statics = {
 				user = await this.findOne({ uid: id }).exec()
 			}
 			if (!user) {
-				// const listHistory = await PredictedResult.list({id:user.uid})
-				// user.recent_activities = listHistory
 				return null
 			}
 
@@ -140,6 +152,12 @@ userSchema.statics = {
 		}
 	},
 
+	//<!-- FindOne then update user -->
+	/**
+	 * @param {String} id - The objectId of user.
+	 * @param {Object} data - The update data.
+	 * @returns {Promise<User, error>}
+	 */
 	async update(id, { ...data }) {
 		try {
 			let user
@@ -163,7 +181,7 @@ userSchema.statics = {
 					url: ROUTE_MAP.USER.UPDATE.PATH,
 					data: body,
 				})
-		
+
 				if (res.error) return null
 				return user
 			}

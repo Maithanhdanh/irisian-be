@@ -1,5 +1,6 @@
 const { body, query, param, cookie } = require("express-validator")
 
+//<!-- Add user -->
 let addAuthUser = () => {
 	return [
 		body(["email"]).trim().exists().isString().notEmpty(),
@@ -7,10 +8,12 @@ let addAuthUser = () => {
 	]
 }
 
+//<!-- Get new token -->
 let token = () => {
 	return [cookie(["refresh_token"]).exists().notEmpty()]
 }
 
+//<!-- Log in -->
 let loginUser = () => {
 	return [
 		body(["email"]).trim().exists().isString().notEmpty(),
@@ -18,6 +21,7 @@ let loginUser = () => {
 	]
 }
 
+//<!-- verify for middleware of add user route -->
 let verifiedUserForNewUser = () => {
 	return [
 		body(["_id"]).trim().exists().isString().notEmpty(),
@@ -30,7 +34,7 @@ let verifiedUserForNewUser = () => {
 		body(["refreshToken"]).exists().isString().notEmpty(),
 	]
 }
-
+//<!-- verify for middleware of log in user route -->
 let verifiedUserForLogin = () => {
 	return [
 		body(["_id"]).trim().exists().isString().notEmpty(),
@@ -41,7 +45,7 @@ let verifiedUserForLogin = () => {
 		body(["refreshToken"]).exists().isString().notEmpty(),
 	]
 }
-
+//<!-- Search list users -->
 let searchUser = () => {
 	return [
 		query(["email"]).trim().exists().isString(),
@@ -50,6 +54,7 @@ let searchUser = () => {
 	]
 }
 
+//<!-- get an user -->
 let getUser = () => {
 	return [
 		param(["id"]).trim().exists().isString().notEmpty(),
@@ -57,6 +62,7 @@ let getUser = () => {
 	]
 }
 
+//<!-- Update user -->
 let updateUser = () => {
 	return [
 		body(["userId"]).exists().notEmpty(),
