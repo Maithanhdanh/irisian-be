@@ -29,8 +29,7 @@ app.use(express.static("public/img"))
 if (ENV_VAR.NODE_ENV !== "test") {
 	if (ENV_VAR.NODE_ENV === "production") {
 		app.use(morgan("combined", { stream: accessLogStream }))
-	} else {
-		app.use(morgan("dev", { stream: accessLogStream }))
+		app.use(morgan("dev"))
 	}
 }
 
