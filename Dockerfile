@@ -1,15 +1,16 @@
-FROM node:8.11-alpine
+FROM node:12
 
-WORKDIR /usr/src/app
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-ARG NODE_ENV
-ENV NODE_ENV $NODE_ENV
+WORKDIR /home/node/app
 
-COPY package.json /usr/src/app/
+COPY package*.json ./
+COPY .env ./.env
+
 RUN npm install
 
-COPY . /usr/src/app
+COPY . .
 
-ENV PORT 5000
-EXPOSE $PORT
-CMD [ "npm", "start" ]
+EXPOSE 5000
+
+CMD [ "node","app.js" ]

@@ -5,11 +5,12 @@ const ENV_VAR = require("./config/vars")
 const fs = require("fs")
 
 const port = ENV_VAR.PORT || 6000
+const host = ENV_VAR.HOST || 'localhost'
 
 mongoose.connect()
 
-server.listen(port, () =>
-	logger.info(`server started on port ${port} (${ENV_VAR.NODE_ENV})`)
+server.listen(port, host, () =>
+	logger.info(`server started on host ${host} port ${port} (${ENV_VAR.NODE_ENV})`)
 )
 
 // check if directory exists

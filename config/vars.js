@@ -1,22 +1,21 @@
 const path = require("path")
 
 // <!-- Load environment variables based on running environment -->
-if (process.env.NODE_ENV.trim() !== "production") {
-	if (process.env.NODE_ENV.trim() === "test") {
-		require("dotenv").config({
-			path: path.join(__dirname, "../test.env"),
-		})
-	} else {
-		require("dotenv").config({
-			path: path.join(__dirname, "../.env"),
-		})
-	}
+if (process.env.NODE_ENV.trim() === "test") {
+	require("dotenv").config({
+		path: path.join(__dirname, "../test.env"),
+	})
+} else {
+	require("dotenv").config({
+		path: path.join(__dirname, "../.env"),
+	})
 }
 
 // <!-- Mapping variables -->
 module.exports = {
 	NODE_ENV: process.env.NODE_ENV,
 	PORT: process.env.PORT,
+	HOST: process.env.HOST,
 	MONGODB_URL: process.env.MONGODB_URL,
 	AUTHENTICATE_URL: process.env.AUTHENTICATE_URL,
 	MACHINE_LEARNING_URL: process.env.MACHINE_LEARNING_URL,

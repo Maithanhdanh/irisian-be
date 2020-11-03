@@ -1,0 +1,1 @@
+docker run -p $1:5000 -d irisian:latest

@@ -1,0 +1,1 @@
+docker build -t irisian-be:latest -f Dockerfile .
